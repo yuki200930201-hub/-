@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#dff4ff">
+<title>English Town 3D | 英語で街づくり</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+:root{--ink:#35445b;--cream:#fffaf0;--blue:#4ba7d8;--gold:#f4b942;--green:#56ad79}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#effaff,#fff8e9);color:var(--ink);font-family:"M PLUS Rounded 1c",sans-serif}
+header{position:sticky;top:0;z-index:5;background:#ffffffed;backdrop-filter:blur(10px);border-bottom:2px solid #e5f0f5;padding:12px 4vw;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:clamp(20px,3vw,28px);margin:0;color:#96631e}.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#fff;border:1px solid #e8e2d5;border-radius:30px;padding:7px 13px;font-weight:800;font-size:14px}
+main{max-width:1200px;margin:auto;padding:22px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(290px,.8fr);gap:20px}
+.panel{background:#fff;border:2px solid #f0e8d9;border-radius:22px;padding:18px;box-shadow:0 8px 25px #50607012}
+h2{font-size:19px;margin:0 0 12px;color:#855c26}.sub{font-size:12px;color:#8190a1}
+#world{height:430px;border-radius:16px;overflow:hidden;background:linear-gradient(#a9e0fb,#e7f8ff);touch-action:none}#world canvas{display:block;width:100%;height:100%}
+.buildings{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}.build{border:2px solid #e6edf0;border-radius:14px;background:#fff;padding:10px 6px;cursor:pointer;font:inherit;color:var(--ink);text-align:center}.build.selected{border-color:#f0b43e;background:#fff7df}.build:disabled{opacity:.45;cursor:not-allowed}.build .emoji{font-size:25px;display:block}.build strong{font-size:13px}.build small{display:block;font-size:11px;color:#718096}
+.quizword{background:linear-gradient(135deg,#e8f7ff,#f2efff);border-radius:17px;padding:25px 12px;text-align:center;margin:12px 0}.word{font-size:34px;font-weight:800;color:#324c6c}.answers{display:grid;gap:9px}.answer{border:2px solid #e5edf3;background:white;border-radius:13px;padding:13px;font:inherit;font-weight:700;color:#41536a;cursor:pointer;text-align:left}.answer:hover{border-color:#70bde5;background:#f4fbff}.answer:disabled{cursor:default}.answer.correct{border-color:#58b77b;background:#edfff2}.answer.wrong{border-color:#e58a83;background:#fff1ef}
+.feedback{margin-top:12px;padding:12px;border-radius:12px;background:#f3f8fc;font-weight:700;min-height:48px}.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}button.action{border:0;border-radius:12px;padding:10px 14px;background:#4b9fd0;color:#fff;font:inherit;font-weight:800;cursor:pointer}button.secondary{background:#e9eff4;color:#536273}
+#toast{position:fixed;bottom:18px;left:50%;transform:translate(-50%,20px);background:#334155;color:white;padding:11px 18px;border-radius:30px;opacity:0;transition:.2s;pointer-events:none;z-index:10}#toast.show{opacity:1;transform:translate(-50%,0)}
+footer{text-align:center;color:#8b98a6;padding:0 15px 24px;font-size:12px}
+@media(max-width:800px){main{grid-template-columns:1fr;padding:13px}.buildings{grid-template-columns:repeat(2,1fr)}#world{height:350px}header{padding:10px 14px}}
+</style>
+</head>
+<body>
+<header><h1>🏙️ English Town 3D <span style="font-size:12px;color:#9b8a70">英語で街づくり</span></h1><div class="stats"><div class="stat">⭐ Lv.<span id="level">1</span></div><div class="stat">🪵 木材 <span id="wood">4</span></div><div class="stat">🪙 コイン <span id="coin">3</span></div><div class="stat">👥 人口 <span id="population">0</span></div></div></header>
+<main>
+<section>
+<div class="panel"><h2>🗺️ あなたの街</h2><div class="sub">建物を選んで空き地をタップ！ドラッグで視点を回転、ピンチ・スクロールで拡大できます。</div><div id="world" aria-label="3Dの街マップ"></div><div id="guide" class="sub" style="margin-top:9px">下の建設メニューから建物を選んでね。</div></div>
+<div class="panel" style="margin-top:16px"><h2>🔨 建設メニュー</h2><div id="buildings" class="buildings"></div></div>
+</section>
+<section class="panel"><h2>📚 英語クイズ</h2><div class="sub">正解すると木材 +1、コイン +1！発音ボタンも使ってみよう。</div><div class="quizword"><div class="sub">この英語の意味はどれ？</div><div style="display:flex;align-items:center;justify-content:center;gap:10px"><div id="question" class="word">apple</div><button id="speak" class="action" aria-label="発音を聞く">🔊</button></div></div><div id="answers" class="answers"></div><div id="feedback" class="feedback" aria-live="polite">正しい意味を選んでね！</div><div class="actions"><button id="next" class="action" disabled>次の問題 ➜</button><button id="save" class="action secondary">💾 セーブ</button><button id="reset" class="action secondary">↻ 最初から</button></div><div class="sub" style="margin-top:14px">正解数：<strong id="solved">0</strong> 問　｜　建物を増やして街を発展させよう！</div></section>
+</main>
+<footer>English Town 3D · 学んで、集めて、街を育てよう！<br>セーブデータはこのブラウザ内に保存されます。</footer><div id="toast"></div>
+<script>
+(function(){
+'use strict';
+const SIZE=5,TOTAL=25,KEY='english-town-3d-save-v2';
+const BUILDINGS=[
+{id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2},
+{id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5},
+{id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12},
+{id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25}
+];
+const QUIZ=[
+['apple','りんご',['りんご','みかん','ぶどう']],['book','本',['机','本','ペン']],['cat','ねこ',['いぬ','とり','ねこ']],['water','水',['火','水','風']],
+['happy','うれしい',['かなしい','ねむい','うれしい']],['school','学校',['病院','学校','駅']],['friend','友だち',['友だち','先生','家族']],['morning','朝',['夜','昼','朝']],
+['Thank you','ありがとう',['ありがとう','さようなら','ごめんなさい']],['Good luck','がんばって',['おやすみ','がんばって','はじめまして']],['city','街・都市',['村','街・都市','森']],['build','建てる',['壊す','建てる','走る']],
+['beautiful','美しい',['美しい','忙しい','難しい']],['library','図書館',['病院','図書館','公園']],['journey','旅',['旅','料理','授業']],['careful','注意深い',['元気な','注意深い','静かな']],
+['delicious','おいしい',['苦い','おいしい','冷たい']],['weather','天気',['季節','天気','時間']],['usually','たいてい',['時々','決して','たいてい']],['discover','発見する',['発見する','説明する','準備する']],
+['environment','環境',['経験','環境','文化']],['improve','改善する',['改善する','想像する','招待する']],['culture','文化',['文化','自然','歴史']],['opportunity','機会',['理由','機会','結果']],
+['comfortable','快適な',['快適な','複雑な','危険な']],['instead','その代わりに',['たとえば','その代わりに','さらに']],['prepare','準備する',['準備する','参加する','比較する']],['successful','成功した',['失敗した','成功した','有名な']]
+];
+let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,current:null,answered:false};
+let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
+function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
+function update(){
+document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;
+renderMenu();
+}
+function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&Array.isArray(d.grid)&&d.grid.length===TOTAL){state.wood=Math.max(0,Number(d.wood)||0);state.coin=Math.max(0,Number(d.coin)||0);state.population=Math.max(0,Number(d.population)||0);state.solved=Math.max(0,Number(d.solved)||0);state.level=Math.max(1,Number(d.level)||1);state.grid=d.grid.map(x=>BUILDINGS.some(b=>b.id===x)?x:null)}}catch(e){}}
+function renderMenu(){const root=document.getElementById('buildings');root.innerHTML='';BUILDINGS.forEach(b=>{const affordable=state.wood>=b.wood&&state.coin>=b.coin;const btn=document.createElement('button');btn.className='build'+(state.selected===b.id?' selected':'');btn.disabled=!affordable&&state.selected!==b.id;btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small><small>人口 +'+b.pop+'</small>';btn.addEventListener('click',()=>{state.selected=state.selected===b.id?null:b.id;document.getElementById('guide').textContent=state.selected?'マップの空き地をタップして'+b.name+'を建てよう！':'下の建設メニューから建物を選んでね。';renderMenu()});root.appendChild(btn)})}
+function makeBuilding(id){
+const g=new THREE.Group(),mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.78});
+function box(w,h,d,c,y){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.y=y;m.castShadow=true;m.receiveShadow=true;g.add(m);return m}
+if(id==='park'){box(1.5,.1,1.5,0x4ade80,.08);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.65,7),mat(0x92552d));trunk.position.y=.43;trunk.castShadow=true;g.add(trunk);const leaf=new THREE.Mesh(new THREE.SphereGeometry(.55,10,9),mat(0x159447));leaf.position.y=1;leaf.castShadow=true;g.add(leaf)}
+if(id==='house'){box(1.15,.9,1.1,0xfff4d6,.52);const roof=new THREE.Mesh(new THREE.ConeGeometry(.88,.75,4),mat(0xe76b58));roof.position.y=1.38;roof.rotation.y=Math.PI/4;roof.castShadow=true;g.add(roof);box(.22,.42,.04,0x8b5e45,.32).position.z=.57}
+if(id==='cafe'){box(1.3,.9,1.15,0xffdf9e,.53);box(1.42,.2,1.28,0x8b5b3d,1.08);box(.58,.22,.06,0x4b9fc8,1.24).position.z=.61}
+if(id==='tower'){box(1.05,2.55,1.05,0x5ab7dc,1.32);box(.65,.28,.65,0x267da8,2.73);for(let y=.55;y<2.5;y+=.48)for(let x of [-.27,.27]){const w=box(.19,.22,.025,0xe4f8ff,y);w.position.x=x;w.position.z=.54}}
+return g}
+function sync(){state.grid.forEach((id,i)=>{if(id&&!meshes[i]){const m=makeBuilding(id),p=tiles[i].position;m.position.set(p.x,.08,p.z);m.scale.set(.02,.02,.02);scene.add(m);meshes[i]=m}else if(!id&&meshes[i]){scene.remove(meshes[i]);meshes[i]=null}})}
+function init3D(){
+const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,20,42);camera=new THREE.PerspectiveCamera(44,w/h,.1,100);camera.position.set(10,11,12);
+renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.appendChild(renderer.domElement);
+controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=26;
+scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE.DirectionalLight(0xfff2d6,.9);sun.position.set(8,16,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const ground=new THREE.Mesh(new THREE.BoxGeometry(16,.5,16),new THREE.MeshStandardMaterial({color:0x85d69a}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
+const offset=(SIZE-1)*2.2/2;
+for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(1.9,.12,1.9),new THREE.MeshStandardMaterial({color:0xd9f99d,roughness:.9}));tile.position.set(c*2.2-offset,0,r*2.2-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
+raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit)place(hit.object.userData.index)});
+window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight;camera.aspect=ww/hh;camera.updateProjectionMatrix();renderer.setSize(ww,hh)});
+sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<.995){m.scale.x+=(1-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(1-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
+}
+function place(i){if(!state.selected){toast('先に建物を選んでね！');return}if(state.grid[i]){toast('そこにはもう建物があるよ');return}const b=BUILDINGS.find(x=>x.id===state.selected);if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');state.selected=null;renderMenu();return}state.wood-=b.wood;state.coin-=b.coin;state.population+=b.pop;state.grid[i]=b.id;const lv=Math.floor(state.population/15)+1;if(lv>state.level){state.level=lv;toast('🎉 街がレベル '+lv+' にアップ！')}else toast(b.name+'を建てたよ！');state.selected=null;document.getElementById('guide').textContent='下の建設メニューから建物を選んでね。';sync();update();save(false)}
+function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
+function answer(opt,btn){if(state.answered)return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.wood++;state.coin++;state.solved++;document.getElementById('feedback').textContent='🎉 正解！ '+state.current[0]+' = '+state.current[1]+'　木材とコインを1つずつゲット！';}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
+document.getElementById('speak').addEventListener('click',()=>{if(!state.current)return;if(!('speechSynthesis'in window)){toast('このブラウザでは発音機能を使えません');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(state.current[0]);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)});
+document.getElementById('next').addEventListener('click',nextQuiz);document.getElementById('save').addEventListener('click',()=>save(true));
+document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);update();save(false);toast('新しい街をスタート！')});
+load();update();init3D();nextQuiz();save(false);
+})();
+</script>
+</body></html>
