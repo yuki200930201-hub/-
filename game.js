@@ -176,8 +176,8 @@ return g;
 function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
 function makeRoad(i){
 const row=Math.floor(i/SIZE),col=i%SIZE,g=new THREE.Group();
-// 道路は1マス分。隣のマスの中心までの間隔いっぱいに広げ、隣接道路との隙間をなくす。
-const roadSize=CELL_SPACING;
+// 道路の舗装面をマス目タイルの表示面と同じ寸法にする。
+const roadSize=CELL_SIZE;
 const asphalt=new THREE.Mesh(new THREE.BoxGeometry(roadSize,.14,roadSize),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
 asphalt.position.y=.08;asphalt.receiveShadow=true;asphalt.castShadow=true;g.add(asphalt);
 const directions={left:col>0&&isRoad(i-1),right:col<SIZE-1&&isRoad(i+1),up:row>0&&isRoad(i-SIZE),down:row<SIZE-1&&isRoad(i+SIZE)};
@@ -206,7 +206,9 @@ const spec=BUILDINGS.find(b=>b.id===id);const offset=id==='road'?0:(spec.cols-1)
 m.position.set(p.x+offset,.08,p.z+offset);
 const target=id==='road'?1:1.3;
 m.userData.targetScale=target;
-m.scale.set(.02,.02,.02);scene.add(m);meshes[i]=m;
+// 道路は最初から1マス分の実寸で表示し、出現アニメーションで縮んで見える状態を避ける。
+if(id==='road')m.scale.set(1,1,1);else m.scale.set(.02,.02,.02);
+scene.add(m);meshes[i]=m;
 });
 }
 function init3D(){
