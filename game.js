@@ -28,10 +28,26 @@ function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood
 function normalizeCell(item){
 if(!item)return null;
 const id=typeof item==='string'?item:item.id;
+if(id==='occupied')return {id:'occupied',anchor:Number(item.anchor)};
 if(id==='road')return {id:'road'};
 if(!BUILDINGS.some(b=>b.id===id))return null;
 const seed=item&&typeof item==='object'&&Number.isFinite(item.seed)?item.seed:Math.floor(Math.random()*2147483646)+1;
 return {id,seed};
+}
+function putMigratedCell(source,row,col){
+const item=normalizeCell(source);
+if(!item)return;
+const anchor=row*SIZE+col;
+if(item.id==='road'){
+for(let dr=0;dr<2;dr++)for(let dc=0;dc<2;dc++)state.grid[(row+dr)*SIZE+col+dc]={id:'road'};
+return;
+}
+if(item.id==='occupied')return;
+state.grid[anchor]=item;
+for(let dr=0;dr<2;dr++)for(let dc=0;dc<2;dc++){
+if(dr===0&&dc===0)continue;
+state.grid[(row+dr)*SIZE+col+dc]={id:'occupied',anchor:anchor};
+}
 }
 function load(){
 try{
@@ -40,10 +56,14 @@ if(!d||!Array.isArray(d.grid))return;
 state.wood=Math.max(0,Number(d.wood)||0);state.coin=Math.max(0,Number(d.coin)||0);
 state.population=Math.max(0,Number(d.population)||0);state.solved=Math.max(0,Number(d.solved)||0);
 state.level=Math.max(1,Number(d.level)||1);
-if(d.grid.length===TOTAL){state.grid=d.grid.map(normalizeCell)}
-else if(d.grid.length===25){
+if(d.grid.length===TOTAL){
+state.grid=d.grid.map(normalizeCell);
+}else if(d.grid.length===81){
 state.grid=Array(TOTAL).fill(null);
-d.grid.forEach((item,i)=>{const row=Math.floor(i/5)+2,col=(i%5)+2;state.grid[row*SIZE+col]=normalizeCell(item)});
+d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,Math.floor(i/9)*2,(i%9)*2)});
+}else if(d.grid.length===25){
+state.grid=Array(TOTAL).fill(null);
+d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,(Math.floor(i/5)+2)*2,((i%5)+2)*2)});
 }
 }catch(e){}
 }
