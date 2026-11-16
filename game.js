@@ -162,14 +162,14 @@ return g;
 function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
 function makeRoad(i){
 const row=Math.floor(i/SIZE),col=i%SIZE,g=new THREE.Group();
-const roadSize=CELL_SPACING/2;
+const roadSize=CELL_SPACING/4;
 const asphalt=new THREE.Mesh(new THREE.BoxGeometry(roadSize,.14,roadSize),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
 asphalt.position.y=.08;asphalt.receiveShadow=true;asphalt.castShadow=true;g.add(asphalt);
 const directions={left:col>0&&isRoad(i-1),right:col<SIZE-1&&isRoad(i+1),up:row>0&&isRoad(i-SIZE),down:row<SIZE-1&&isRoad(i+SIZE)};
 const horizontal=directions.left||directions.right||(!directions.up&&!directions.down);
 const vertical=directions.up||directions.down;
 const paint=new THREE.MeshStandardMaterial({color:0xffdf83,roughness:.8});
-function dash(alongX){const mark=new THREE.Mesh(new THREE.BoxGeometry(alongX?.13:.025,.012,alongX?.025:.13),paint);mark.position.set(0,.158,0);g.add(mark);}
+function dash(alongX){const mark=new THREE.Mesh(new THREE.BoxGeometry(alongX?.06:.012,.01,alongX?.012:.06),paint);mark.position.set(0,.158,0);g.add(mark);}
 if(horizontal)dash(true);
 if(vertical)dash(false);
 return g;
