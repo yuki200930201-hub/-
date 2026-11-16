@@ -177,7 +177,7 @@ function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
 function makeRoad(i){
 const row=Math.floor(i/SIZE),col=i%SIZE,g=new THREE.Group();
 // 道路の舗装面をマス目タイルの表示面と同じ寸法にする。
-const roadSize=CELL_SIZE;
+const roadSize=CELL_SPACING;
 const asphalt=new THREE.Mesh(new THREE.BoxGeometry(roadSize,.14,roadSize),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
 asphalt.position.y=.08;asphalt.receiveShadow=true;asphalt.castShadow=true;g.add(asphalt);
 const directions={left:col>0&&isRoad(i-1),right:col<SIZE-1&&isRoad(i+1),up:row>0&&isRoad(i-SIZE),down:row<SIZE-1&&isRoad(i+SIZE)};
