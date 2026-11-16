@@ -176,8 +176,8 @@ return g;
 function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
 function makeRoad(i){
 const row=Math.floor(i/SIZE),col=i%SIZE,g=new THREE.Group();
-// 道路は1マス分。地面タイルと同じCELL_SIZEで描画して、マス目にぴったり合わせる。
-const roadSize=CELL_SIZE;
+// 道路は1マス分。隣のマスの中心までの間隔いっぱいに広げ、隣接道路との隙間をなくす。
+const roadSize=CELL_SPACING;
 const asphalt=new THREE.Mesh(new THREE.BoxGeometry(roadSize,.14,roadSize),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
 asphalt.position.y=.08;asphalt.receiveShadow=true;asphalt.castShadow=true;g.add(asphalt);
 const directions={left:col>0&&isRoad(i-1),right:col<SIZE-1&&isRoad(i+1),up:row>0&&isRoad(i-SIZE),down:row<SIZE-1&&isRoad(i+SIZE)};
