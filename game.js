@@ -170,7 +170,7 @@ if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
 const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14]}[id];
-g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
+const footprintScale=id==='house'?.76:.9;g.scale.set(spec.cols*CELL_SPACING*footprintScale/base[0],1,spec.rows*CELL_SPACING*footprintScale/base[1]);
 return g;
 }
 function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
