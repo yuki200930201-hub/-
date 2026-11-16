@@ -77,7 +77,7 @@ btn.disabled=!affordable&&state.selected!==b.id;
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路を敷く</small>':'<small>人口 +'+b.pop+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
-document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：マスをタップして道路を敷こう！':'建物は道路に隣接するマスに建てよう！'):'ツールを選んでマップをタップしよう。';
+document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：1マスずつ道路を敷こう！':'建物ツール：2×2マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
 renderMenu();
 });
 root.appendChild(btn);
@@ -174,7 +174,6 @@ function sync(){
 for(let i=0;i<TOTAL;i++){
 const item=state.grid[i];
 if(meshes[i]&&(!item||item.id==='occupied'||item.id==='road')){scene.remove(meshes[i]);meshes[i]=null;}
-if(meshes[i]&&item&&item.id!=='road'){scene.remove(meshes[i]);meshes[i]=null;}
 }
 state.grid.forEach((item,i)=>{
 if(!item||item.id==='occupied'||meshes[i])return;
@@ -200,16 +199,47 @@ window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight
 sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<(m.userData.targetScale||1)-.005){const target=m.userData.targetScale||1;m.scale.x+=(target-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(target-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
 }
 function hasAdjacentRoad(i){
-const row=Math.floor(i/SIZE),col=i%SIZE;
-return (col>0&&isRoad(i-1))||(col<SIZE-1&&isRoad(i+1))||(row>0&&isRoad(i-SIZE))||(row<SIZE-1&&isRoad(i+SIZE));
+const row=Math.floor(i/SIZE),col=i%SIZE,span=BUILDING_CELLS;
+if(row+span>SIZE||col+span>SIZE)return false;
+for(let c=col;c<col+span;c++){
+if(row>0&&isRoad((row-1)*SIZE+c))return true;
+if(row+span<SIZE&&isRoad((row+span)*SIZE+c))return true;
+}
+for(let r=row;r<row+span;r++){
+if(col>0&&isRoad(r*SIZE+col-1))return true;
+if(col+span<SIZE&&isRoad(r*SIZE+col+span))return true;
+}
+return false;
+}
+function resolveAnchor(i){
+const item=state.grid[i];
+if(item&&item.id==='occupied')return Number.isInteger(item.anchor)?item.anchor:-1;
+return item?i:-1;
+}
+function clearBuilding(anchor){
+const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
+for(let dr=0;dr<BUILDING_CELLS;dr++)for(let dc=0;dc<BUILDING_CELLS;dc++){
+const index=(row+dr)*SIZE+col+dc;
+if(index>=0&&index<TOTAL){
+const item=state.grid[index];
+if(index===anchor||(item&&item.id==='occupied'&&item.anchor===anchor))state.grid[index]=null;
+}
+}
 }
 function place(i){
 if(!state.selected){toast('まずツールを選んでね！');return;}
 if(state.selected==='bulldozer'){
-const item=state.grid[i];if(!item){toast('ここには撤去するものがないよ');return;}
-if(item.id!=='road'){const b=BUILDINGS.find(x=>x.id===item.id);if(b)state.population=Math.max(0,state.population-b.pop);}
-state.grid[i]=null;state.level=Math.max(1,Math.floor(state.population/15)+1);
-toast((item.id==='road'?'道路':'建物')+'を撤去したよ');sync();update();save(false);return;
+const anchor=resolveAnchor(i);
+if(anchor<0){toast('ここには撤去するものがないよ');return;}
+const item=state.grid[anchor];
+if(item.id==='road'){state.grid[anchor]=null;toast('道路を撤去したよ');}
+else{
+const b=BUILDINGS.find(x=>x.id===item.id);
+if(b)state.population=Math.max(0,state.population-b.pop);
+clearBuilding(anchor);toast('建物全体を撤去したよ');
+}
+state.level=Math.max(1,Math.floor(state.population/15)+1);
+sync();update();save(false);return;
 }
 if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
 if(state.selected==='road'){
@@ -219,13 +249,20 @@ toast('🛣️ 道路を敷いたよ！');
 sync();update();save(false);return;
 }
 const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
-if(!hasAdjacentRoad(i)){toast('建物は道路に隣接するマスに建てよう！');return;}
+const row=Math.floor(i/SIZE),col=i%SIZE;
+if(row+BUILDING_CELLS>SIZE||col+BUILDING_CELLS>SIZE){toast('建物の2×2マスがマップ内に収まる場所を選んでね');return;}
+const footprint=[];
+for(let dr=0;dr<BUILDING_CELLS;dr++)for(let dc=0;dc<BUILDING_CELLS;dc++)footprint.push((row+dr)*SIZE+col+dc);
+if(footprint.some(index=>state.grid[index])){toast('建物は2×2マス必要だよ。空いている場所を選んでね！');return;}
+if(!hasAdjacentRoad(i)){toast('建物の2×2マスの外周に道路をつなげよう！');return;}
 if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');return;}
 state.wood-=b.wood;state.coin-=b.coin;state.population+=b.pop;
-state.grid[i]={id:b.id,seed:Math.floor(Math.random()*2147483646)+1};
+const seed=Math.floor(Math.random()*2147483646)+1;
+state.grid[i]={id:b.id,seed};
+footprint.slice(1).forEach(index=>{state.grid[index]={id:'occupied',anchor:i};});
 const lv=Math.floor(state.population/15)+1;
 if(lv>state.level){state.level=lv;toast('🎉 街がレベル '+lv+' にアップ！');}
-else toast(b.name+'を建てたよ！道路に接続できたね');
+else toast(b.name+'を2×2マスで建てたよ！');
 sync();update();save(false);
 }
 function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
