@@ -159,27 +159,32 @@ return g;
 function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
 function makeRoad(i){
 const row=Math.floor(i/SIZE),col=i%SIZE,g=new THREE.Group();
-const asphalt=new THREE.Mesh(new THREE.BoxGeometry(2.18,.14,2.18),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
+const asphalt=new THREE.Mesh(new THREE.BoxGeometry(CELL_SPACING,.14,CELL_SPACING),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
 asphalt.position.y=.08;asphalt.receiveShadow=true;asphalt.castShadow=true;g.add(asphalt);
 const directions={left:col>0&&isRoad(i-1),right:col<SIZE-1&&isRoad(i+1),up:row>0&&isRoad(i-SIZE),down:row<SIZE-1&&isRoad(i+SIZE)};
 const horizontal=directions.left||directions.right||(!directions.up&&!directions.down);
 const vertical=directions.up||directions.down;
 const paint=new THREE.MeshStandardMaterial({color:0xffdf83,roughness:.8});
-function dash(x,z,alongX){const mark=new THREE.Mesh(new THREE.BoxGeometry(alongX?.34:.055,.018,alongX?.055:.34),paint);mark.position.set(x,.158,z);g.add(mark)}
-if(horizontal)for(const x of [-.72,-.18,.36,.9])dash(x,0,true);
-if(vertical)for(const z of [-.72,-.18,.36,.9])dash(0,z,false);
+function dash(alongX){const mark=new THREE.Mesh(new THREE.BoxGeometry(alongX?.2:.035,.018,alongX?.035:.2),paint);mark.position.set(0,.158,0);g.add(mark);}
+if(horizontal)dash(true);
+if(vertical)dash(false);
 return g;
 }
 function sync(){
 for(let i=0;i<TOTAL;i++){
-if(meshes[i]&&isRoad(i)){scene.remove(meshes[i]);meshes[i]=null;}
-if(!state.grid[i]&&meshes[i]){scene.remove(meshes[i]);meshes[i]=null;}
+const item=state.grid[i];
+if(meshes[i]&&(!item||item.id==='occupied'||item.id==='road')){scene.remove(meshes[i]);meshes[i]=null;}
+if(meshes[i]&&item&&item.id!=='road'){scene.remove(meshes[i]);meshes[i]=null;}
 }
 state.grid.forEach((item,i)=>{
-if(!item||meshes[i])return;
+if(!item||item.id==='occupied'||meshes[i])return;
 const id=item.id,p=tiles[i].position;
 const m=id==='road'?makeRoad(i):makeBuilding(id,item.seed||i+1);
-m.position.set(p.x,.08,p.z);m.scale.set(.02,.02,.02);scene.add(m);meshes[i]=m;
+const offset=id==='road'?0:CELL_SPACING/2;
+m.position.set(p.x+offset,.08,p.z+offset);
+const target=id==='road'?1:1.3;
+m.userData.targetScale=target;
+m.scale.set(.02,.02,.02);scene.add(m);meshes[i]=m;
 });
 }
 function init3D(){
@@ -188,11 +193,11 @@ renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelR
 controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=38;
 scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE.DirectionalLight(0xfff2d6,.9);sun.position.set(8,16,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const ground=new THREE.Mesh(new THREE.BoxGeometry(22.5,.5,22.5),new THREE.MeshStandardMaterial({color:0x85d69a}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
-const offset=(SIZE-1)*2.2/2;
-for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(2.18,.12,2.18),new THREE.MeshStandardMaterial({color:0xd9f99d,roughness:.9}));tile.position.set(c*2.2-offset,0,r*2.2-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
+const offset=(SIZE-1)*CELL_SPACING/2;
+for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE,.12,CELL_SIZE),new THREE.MeshStandardMaterial({color:0xd9f99d,roughness:.9}));tile.position.set(c*CELL_SPACING-offset,0,r*CELL_SPACING-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
 raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit)place(hit.object.userData.index)});
 window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight;camera.aspect=ww/hh;camera.updateProjectionMatrix();renderer.setSize(ww,hh)});
-sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<.995){m.scale.x+=(1-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(1-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
+sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<(m.userData.targetScale||1)-.005){const target=m.userData.targetScale||1;m.scale.x+=(target-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(target-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
 }
 function hasAdjacentRoad(i){
 const row=Math.floor(i/SIZE),col=i%SIZE;
