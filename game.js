@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const SIZE=18,TOTAL=SIZE*SIZE,CELL_SPACING=1.1,CELL_SIZE=1.06,BUILDING_CELLS=2,KEY='english-town-3d-save-v2';
+const SIZE=36,TOTAL=SIZE*SIZE,CELL_SPACING=.55,CELL_SIZE=.53,BUILDING_CELLS=4,KEY='english-town-3d-save-v2';
 const BUILDINGS=[
 {id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2},
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5},
@@ -34,17 +34,17 @@ if(!BUILDINGS.some(b=>b.id===id))return null;
 const seed=item&&typeof item==='object'&&Number.isFinite(item.seed)?item.seed:Math.floor(Math.random()*2147483646)+1;
 return {id,seed};
 }
-function putMigratedCell(source,row,col){
+function putMigratedCell(source,row,col,scale){
 const item=normalizeCell(source);
 if(!item)return;
-const anchor=row*SIZE+col;
+const anchor=row*SIZE+col,span=scale*2;
 if(item.id==='road'){
-for(let dr=0;dr<2;dr++)for(let dc=0;dc<2;dc++)state.grid[(row+dr)*SIZE+col+dc]={id:'road'};
+for(let dr=0;dr<scale;dr++)for(let dc=0;dc<scale;dc++)state.grid[(row+dr)*SIZE+col+dc]={id:'road'};
 return;
 }
 if(item.id==='occupied')return;
 state.grid[anchor]=item;
-for(let dr=0;dr<2;dr++)for(let dc=0;dc<2;dc++){
+for(let dr=0;dr<span;dr++)for(let dc=0;dc<span;dc++){
 if(dr===0&&dc===0)continue;
 state.grid[(row+dr)*SIZE+col+dc]={id:'occupied',anchor:anchor};
 }
@@ -58,12 +58,15 @@ state.population=Math.max(0,Number(d.population)||0);state.solved=Math.max(0,Num
 state.level=Math.max(1,Number(d.level)||1);
 if(d.grid.length===TOTAL){
 state.grid=d.grid.map(normalizeCell);
+}else if(d.grid.length===324){
+state.grid=Array(TOTAL).fill(null);
+d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,Math.floor(i/18)*2,(i%18)*2,2)});
 }else if(d.grid.length===81){
 state.grid=Array(TOTAL).fill(null);
-d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,Math.floor(i/9)*2,(i%9)*2)});
+d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,Math.floor(i/9)*4,(i%9)*4,4)});
 }else if(d.grid.length===25){
 state.grid=Array(TOTAL).fill(null);
-d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,(Math.floor(i/5)+2)*2,((i%5)+2)*2)});
+d.grid.forEach((item,i)=>{if(item)putMigratedCell(item,(Math.floor(i/5)+2)*4,((i%5)+2)*4,4)});
 }
 }catch(e){}
 }
@@ -74,10 +77,10 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=!affordable&&state.selected!==b.id;
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>人口 +'+b.pop+'</small><small>敷地 2×2マス</small>');
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>人口 +'+b.pop+'</small><small>敷地 4×4マス</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
-document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：1マスずつ道路を敷こう！':'建物ツール：2×2マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
+document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：4×4マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
 renderMenu();
 });
 root.appendChild(btn);
@@ -179,7 +182,7 @@ state.grid.forEach((item,i)=>{
 if(!item||item.id==='occupied'||meshes[i])return;
 const id=item.id,p=tiles[i].position;
 const m=id==='road'?makeRoad(i):makeBuilding(id,item.seed||i+1);
-const offset=id==='road'?0:CELL_SPACING/2;
+const offset=id==='road'?0:CELL_SPACING*(BUILDING_CELLS/2);
 m.position.set(p.x+offset,.08,p.z+offset);
 const target=id==='road'?1:1.3;
 m.userData.targetScale=target;
@@ -191,7 +194,7 @@ const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;sce
 renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.appendChild(renderer.domElement);
 controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=38;
 scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE.DirectionalLight(0xfff2d6,.9);sun.position.set(8,16,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
-const ground=new THREE.Mesh(new THREE.BoxGeometry(22.5,.5,22.5),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
+const ground=new THREE.Mesh(new THREE.BoxGeometry(20.5,.5,20.5),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
 const offset=(SIZE-1)*CELL_SPACING/2;
 for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE,.12,CELL_SIZE),new THREE.MeshStandardMaterial({color:0xb8c4b5,roughness:.95}));tile.position.set(c*CELL_SPACING-offset,0,r*CELL_SPACING-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
 raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit)place(hit.object.userData.index)});
@@ -250,11 +253,11 @@ sync();update();save(false);return;
 }
 const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
 const row=Math.floor(i/SIZE),col=i%SIZE;
-if(row+BUILDING_CELLS>SIZE||col+BUILDING_CELLS>SIZE){toast('建物の2×2マスがマップ内に収まる場所を選んでね');return;}
+if(row+BUILDING_CELLS>SIZE||col+BUILDING_CELLS>SIZE){toast('建物の4×4マスがマップ内に収まる場所を選んでね');return;}
 const footprint=[];
 for(let dr=0;dr<BUILDING_CELLS;dr++)for(let dc=0;dc<BUILDING_CELLS;dc++)footprint.push((row+dr)*SIZE+col+dc);
-if(footprint.some(index=>state.grid[index])){toast('建物は2×2マス必要だよ。空いている場所を選んでね！');return;}
-if(!hasAdjacentRoad(i)){toast('建物の2×2マスの外周に道路をつなげよう！');return;}
+if(footprint.some(index=>state.grid[index])){toast('建物は4×4マス必要だよ。空いている場所を選んでね！');return;}
+if(!hasAdjacentRoad(i)){toast('建物の4×4マスの外周に道路をつなげよう！');return;}
 if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');return;}
 state.wood-=b.wood;state.coin-=b.coin;state.population+=b.pop;
 const seed=Math.floor(Math.random()*2147483646)+1;
@@ -262,7 +265,7 @@ state.grid[i]={id:b.id,seed};
 footprint.slice(1).forEach(index=>{state.grid[index]={id:'occupied',anchor:i};});
 const lv=Math.floor(state.population/15)+1;
 if(lv>state.level){state.level=lv;toast('🎉 街がレベル '+lv+' にアップ！');}
-else toast(b.name+'を2×2マスで建てたよ！');
+else toast(b.name+'を4×4マスで建てたよ！');
 sync();update();save(false);
 }
 function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
