@@ -1,12 +1,13 @@
 (function(){
 'use strict';
-const SIZE=5,TOTAL=25,KEY='english-town-3d-save-v2';
+const SIZE=9,TOTAL=SIZE*SIZE,KEY='english-town-3d-save-v2';
 const BUILDINGS=[
 {id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2},
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5},
 {id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12},
 {id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25}
 ];
+const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
 ['apple','りんご',['りんご','みかん','ぶどう']],['book','本',['机','本','ペン']],['cat','ねこ',['いぬ','とり','ねこ']],['water','水',['火','水','風']],
 ['happy','うれしい',['かなしい','ねむい','うれしい']],['school','学校',['病院','学校','駅']],['friend','友だち',['友だち','先生','家族']],['morning','朝',['夜','昼','朝']],
@@ -20,12 +21,57 @@ let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),leve
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function update(){
-document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;
+document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
 renderMenu();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&Array.isArray(d.grid)&&d.grid.length===TOTAL){state.wood=Math.max(0,Number(d.wood)||0);state.coin=Math.max(0,Number(d.coin)||0);state.population=Math.max(0,Number(d.population)||0);state.solved=Math.max(0,Number(d.solved)||0);state.level=Math.max(1,Number(d.level)||1);state.grid=d.grid.map((item,i)=>{const id=typeof item==='string'?item:(item&&item.id);if(!BUILDINGS.some(b=>b.id===id))return null;const seed=item&&typeof item==='object'&&Number.isFinite(item.seed)?item.seed:Math.floor(Math.random()*2147483646)+1;return {id,seed}})}}catch(e){}}
-function renderMenu(){const root=document.getElementById('buildings');root.innerHTML='';BUILDINGS.forEach(b=>{const affordable=state.wood>=b.wood&&state.coin>=b.coin;const btn=document.createElement('button');btn.className='build'+(state.selected===b.id?' selected':'');btn.disabled=!affordable&&state.selected!==b.id;btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small><small>人口 +'+b.pop+'</small>';btn.addEventListener('click',()=>{state.selected=state.selected===b.id?null:b.id;document.getElementById('guide').textContent=state.selected?'マップの空き地をタップして'+b.name+'を建てよう！':'下の建設メニューから建物を選んでね。';renderMenu()});root.appendChild(btn)})}
+function normalizeCell(item){
+if(!item)return null;
+const id=typeof item==='string'?item:item.id;
+if(id==='road')return {id:'road'};
+if(!BUILDINGS.some(b=>b.id===id))return null;
+const seed=item&&typeof item==='object'&&Number.isFinite(item.seed)?item.seed:Math.floor(Math.random()*2147483646)+1;
+return {id,seed};
+}
+function load(){
+try{
+const d=JSON.parse(localStorage.getItem(KEY)||'null');
+if(!d||!Array.isArray(d.grid))return;
+state.wood=Math.max(0,Number(d.wood)||0);state.coin=Math.max(0,Number(d.coin)||0);
+state.population=Math.max(0,Number(d.population)||0);state.solved=Math.max(0,Number(d.solved)||0);
+state.level=Math.max(1,Number(d.level)||1);
+if(d.grid.length===TOTAL){state.grid=d.grid.map(normalizeCell)}
+else if(d.grid.length===25){
+state.grid=Array(TOTAL).fill(null);
+d.grid.forEach((item,i)=>{const row=Math.floor(i/5)+2,col=(i%5)+2;state.grid[row*SIZE+col]=normalizeCell(item)});
+}
+}catch(e){}
+}
+function renderMenu(){
+const root=document.getElementById('buildings');root.innerHTML='';
+[...BUILDINGS,ROAD].forEach(b=>{
+const affordable=state.wood>=b.wood&&state.coin>=b.coin;
+const btn=document.createElement('button');
+btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
+btn.disabled=!affordable&&state.selected!==b.id;
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路を敷く</small>':'<small>人口 +'+b.pop+'</small>');
+btn.addEventListener('click',()=>{
+state.selected=state.selected===b.id?null:b.id;
+document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：マスをタップして道路を敷こう！':'建物は道路に隣接するマスに建てよう！'):'ツールを選んでマップをタップしよう。';
+renderMenu();
+});
+root.appendChild(btn);
+});
+const erase=document.createElement('button');
+erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
+erase.innerHTML='<span class="emoji">🚜</span><strong>撤去</strong><small>費用なし</small><small>道路・建物を撤去</small>';
+erase.addEventListener('click',()=>{
+state.selected=state.selected==='bulldozer'?null:'bulldozer';
+document.getElementById('guide').textContent=state.selected?'撤去ツール：マスをタップして道路や建物を取り除こう。':'ツールを選んでマップをタップしよう。';
+renderMenu();
+});
+root.appendChild(erase);
+}
 function seededRandom(seed){
 let x=(Number(seed)||1)>>>0;
 return function(){x+=0x6D2B79F5;let t=x;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296};
@@ -90,20 +136,73 @@ if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
 return g;
 }
-function sync(){state.grid.forEach((item,i)=>{if(item&&!meshes[i]){const id=typeof item==='string'?item:item.id,seed=typeof item==='object'&&item?item.seed:i+1;const m=makeBuilding(id,seed),p=tiles[i].position;m.position.set(p.x,.08,p.z);m.scale.set(.02,.02,.02);scene.add(m);meshes[i]=m}else if(!item&&meshes[i]){scene.remove(meshes[i]);meshes[i]=null}})}
+function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
+function makeRoad(i){
+const row=Math.floor(i/SIZE),col=i%SIZE,g=new THREE.Group();
+const asphalt=new THREE.Mesh(new THREE.BoxGeometry(2.18,.14,2.18),new THREE.MeshStandardMaterial({color:0x58616b,roughness:.95}));
+asphalt.position.y=.08;asphalt.receiveShadow=true;asphalt.castShadow=true;g.add(asphalt);
+const directions={left:col>0&&isRoad(i-1),right:col<SIZE-1&&isRoad(i+1),up:row>0&&isRoad(i-SIZE),down:row<SIZE-1&&isRoad(i+SIZE)};
+const horizontal=directions.left||directions.right||(!directions.up&&!directions.down);
+const vertical=directions.up||directions.down;
+const paint=new THREE.MeshStandardMaterial({color:0xffdf83,roughness:.8});
+function dash(x,z,alongX){const mark=new THREE.Mesh(new THREE.BoxGeometry(alongX?.34:.055,.018,alongX?.055:.34),paint);mark.position.set(x,.158,z);g.add(mark)}
+if(horizontal)for(const x of [-.72,-.18,.36,.9])dash(x,0,true);
+if(vertical)for(const z of [-.72,-.18,.36,.9])dash(0,z,false);
+return g;
+}
+function sync(){
+for(let i=0;i<TOTAL;i++){
+if(meshes[i]&&isRoad(i)){scene.remove(meshes[i]);meshes[i]=null;}
+if(!state.grid[i]&&meshes[i]){scene.remove(meshes[i]);meshes[i]=null;}
+}
+state.grid.forEach((item,i)=>{
+if(!item||meshes[i])return;
+const id=item.id,p=tiles[i].position;
+const m=id==='road'?makeRoad(i):makeBuilding(id,item.seed||i+1);
+m.position.set(p.x,.08,p.z);m.scale.set(.02,.02,.02);scene.add(m);meshes[i]=m;
+});
+}
 function init3D(){
-const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,20,42);camera=new THREE.PerspectiveCamera(44,w/h,.1,100);camera.position.set(10,11,12);
+const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
 renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.appendChild(renderer.domElement);
-controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=26;
+controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=38;
 scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE.DirectionalLight(0xfff2d6,.9);sun.position.set(8,16,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
-const ground=new THREE.Mesh(new THREE.BoxGeometry(16,.5,16),new THREE.MeshStandardMaterial({color:0x85d69a}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
+const ground=new THREE.Mesh(new THREE.BoxGeometry(22.5,.5,22.5),new THREE.MeshStandardMaterial({color:0x85d69a}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
 const offset=(SIZE-1)*2.2/2;
-for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(1.9,.12,1.9),new THREE.MeshStandardMaterial({color:0xd9f99d,roughness:.9}));tile.position.set(c*2.2-offset,0,r*2.2-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
+for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(2.18,.12,2.18),new THREE.MeshStandardMaterial({color:0xd9f99d,roughness:.9}));tile.position.set(c*2.2-offset,0,r*2.2-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
 raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit)place(hit.object.userData.index)});
 window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight;camera.aspect=ww/hh;camera.updateProjectionMatrix();renderer.setSize(ww,hh)});
 sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<.995){m.scale.x+=(1-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(1-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
 }
-function place(i){if(!state.selected){toast('先に建物を選んでね！');return}if(state.grid[i]){toast('そこにはもう建物があるよ');return}const b=BUILDINGS.find(x=>x.id===state.selected);if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');state.selected=null;renderMenu();return}state.wood-=b.wood;state.coin-=b.coin;state.population+=b.pop;state.grid[i]={id:b.id,seed:Math.floor(Math.random()*2147483646)+1};const lv=Math.floor(state.population/15)+1;if(lv>state.level){state.level=lv;toast('🎉 街がレベル '+lv+' にアップ！')}else toast(b.name+'を建てたよ！');state.selected=null;document.getElementById('guide').textContent='下の建設メニューから建物を選んでね。';sync();update();save(false)}
+function hasAdjacentRoad(i){
+const row=Math.floor(i/SIZE),col=i%SIZE;
+return (col>0&&isRoad(i-1))||(col<SIZE-1&&isRoad(i+1))||(row>0&&isRoad(i-SIZE))||(row<SIZE-1&&isRoad(i+SIZE));
+}
+function place(i){
+if(!state.selected){toast('まずツールを選んでね！');return;}
+if(state.selected==='bulldozer'){
+const item=state.grid[i];if(!item){toast('ここには撤去するものがないよ');return;}
+if(item.id!=='road'){const b=BUILDINGS.find(x=>x.id===item.id);if(b)state.population=Math.max(0,state.population-b.pop);}
+state.grid[i]=null;state.level=Math.max(1,Math.floor(state.population/15)+1);
+toast((item.id==='road'?'道路':'建物')+'を撤去したよ');sync();update();save(false);return;
+}
+if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
+if(state.selected==='road'){
+if(state.coin<ROAD.coin){toast('コインが足りないよ！英語クイズに挑戦しよう');return;}
+state.coin-=ROAD.coin;state.grid[i]={id:'road'};
+toast('🛣️ 道路を敷いたよ！');
+sync();update();save(false);return;
+}
+const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
+if(!hasAdjacentRoad(i)){toast('建物は道路に隣接するマスに建てよう！');return;}
+if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');return;}
+state.wood-=b.wood;state.coin-=b.coin;state.population+=b.pop;
+state.grid[i]={id:b.id,seed:Math.floor(Math.random()*2147483646)+1};
+const lv=Math.floor(state.population/15)+1;
+if(lv>state.level){state.level=lv;toast('🎉 街がレベル '+lv+' にアップ！');}
+else toast(b.name+'を建てたよ！道路に接続できたね');
+sync();update();save(false);
+}
 function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
 function answer(opt,btn){if(state.answered)return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.wood++;state.coin++;state.solved++;document.getElementById('feedback').textContent='🎉 正解！ '+state.current[0]+' = '+state.current[1]+'　木材とコインを1つずつゲット！';}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
 document.getElementById('speak').addEventListener('click',()=>{if(!state.current)return;if(!('speechSynthesis'in window)){toast('このブラウザでは発音機能を使えません');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(state.current[0]);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)});
