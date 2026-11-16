@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const SIZE=9,TOTAL=SIZE*SIZE,KEY='english-town-3d-save-v2';
+const SIZE=18,TOTAL=SIZE*SIZE,CELL_SPACING=1.1,CELL_SIZE=1.06,BUILDING_CELLS=2,KEY='english-town-3d-save-v2';
 const BUILDINGS=[
 {id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2},
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5},
