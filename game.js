@@ -132,7 +132,7 @@ add(crown,x,.12+trunkH+.22*s,z);
 for(let i=0;i<3;i++){const flower=add(new THREE.Mesh(new THREE.SphereGeometry(.055,7,6),mat(pick([0xffe08a,0xffa6c8,0xffffff]))),range(-.62,.62),.17,range(-.62,.62));flower.scale.set(1,.55,1)}
 }
 if(id==='house'){
-const w=range(.96,1.25),d=range(.9,1.22),h=range(.72,1.08);
+const w=range(.96,1.25)*.8,d=range(.9,1.22)*.8,h=range(.72,1.08);
 const wall=pick([0xfff0c7,0xffd9bd,0xe9f3ff,0xe1f2d5,0xffe5ef,0xf1e5ff]),roofColor=pick([0xe76b58,0x9b5c42,0x4e718c,0x596b50,0x8557a2]);
 box(w,h,d,wall,.08+h/2);
 const roofStyle=Math.floor(rand()*3);
@@ -170,7 +170,7 @@ if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
 const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14]}[id];
-const footprintScale=id==='house'?.4864:.9;g.scale.set(spec.cols*CELL_SPACING*footprintScale/base[0],1,spec.rows*CELL_SPACING*footprintScale/base[1]);
+g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
 function isRoad(i){return !!state.grid[i]&&state.grid[i].id==='road'}
