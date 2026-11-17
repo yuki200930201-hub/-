@@ -20,9 +20,20 @@ const QUIZ=[
 let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,current:null,answered:false};
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
+function setMenuOpen(open){
+const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
+menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
+toggle.setAttribute('aria-expanded',String(open));
+}
+function updateToolStatus(){
+const el=document.getElementById('toolStatus');
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',bulldozer:'撤去'};
+el.textContent=state.selected?'選択中：'+labels[state.selected]+' ｜ マップをタップしてね':'';
+el.classList.toggle('show',!!state.selected);
+}
 function update(){
 document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
-renderMenu();
+renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
 function normalizeCell(item){
@@ -93,7 +104,7 @@ btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
-renderMenu();
+renderMenu();updateToolStatus();setMenuOpen(false);
 });
 root.appendChild(btn);
 });
@@ -103,7 +114,7 @@ erase.innerHTML='<span class="emoji">🚜</span><strong>撤去</strong><small>�
 erase.addEventListener('click',()=>{
 state.selected=state.selected==='bulldozer'?null:'bulldozer';
 document.getElementById('guide').textContent=state.selected?'撤去ツール：マスをタップして道路や建物を取り除こう。':'ツールを選んでマップをタップしよう。';
-renderMenu();
+renderMenu();updateToolStatus();setMenuOpen(false);
 });
 root.appendChild(erase);
 }
@@ -290,6 +301,9 @@ function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.rand
 function answer(opt,btn){if(state.answered)return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.wood++;state.coin++;state.solved++;document.getElementById('feedback').textContent='🎉 正解！ '+state.current[0]+' = '+state.current[1]+'　木材とコインを1つずつゲット！';}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
 document.getElementById('speak').addEventListener('click',()=>{if(!state.current)return;if(!('speechSynthesis'in window)){toast('このブラウザでは発音機能を使えません');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(state.current[0]);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)});
 document.getElementById('next').addEventListener('click',nextQuiz);document.getElementById('save').addEventListener('click',()=>save(true));
+document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!document.getElementById('gameMenu').classList.contains('open')));
+document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenuOpen(false)});
 document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);update();save(false);toast('新しい街をスタート！')});
 load();update();init3D();nextQuiz();save(false);
 })();
