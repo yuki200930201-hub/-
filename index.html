@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#dff4ff">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#a9e0fb">
 <title>English Town 3D | 英語で街づくり</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
@@ -12,14 +12,49 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><h1>🏙️ English Town 3D <span style="font-size:12px;color:#9b8a70">英語で街づくり</span></h1><div class="stats"><div class="stat">⭐ Lv.<span id="level">1</span></div><div class="stat">🪵 木材 <span id="wood">4</span></div><div class="stat">🪙 コイン <span id="coin">3</span></div><div class="stat">👥 人口 <span id="population">0</span></div><div class="stat">🛣️ 道路 <span id="roads">0</span></div></div></header>
-<main>
-<section>
-<div class="panel"><h2>🗺️ あなたの街</h2><div class="sub">道路は1マス、建物は2×2マス。道路に隣接する場所へ建物を配置しよう！ドラッグで視点回転、ピンチで拡大できます。</div><div id="world" aria-label="3Dの街マップ"></div><div id="guide" class="sub" style="margin-top:9px">道路（1マス）・建物（2×2マス）・撤去を選んで、マップをタップしよう。</div></div>
-<div class="panel" style="margin-top:16px"><h2>🏗️ 都市開発メニュー</h2><div id="buildings" class="buildings"></div></div>
-</section>
-<section class="panel"><h2>📚 英語クイズ</h2><div class="sub">正解すると木材 +1、コイン +1！発音ボタンも使ってみよう。</div><div class="quizword"><div class="sub">この英語の意味はどれ？</div><div style="display:flex;align-items:center;justify-content:center;gap:10px"><div id="question" class="word">apple</div><button id="speak" class="action" aria-label="発音を聞く">🔊</button></div></div><div id="answers" class="answers"></div><div id="feedback" class="feedback" aria-live="polite">正しい意味を選んでね！</div><div class="actions"><button id="next" class="action" disabled>次の問題 ➜</button><button id="save" class="action secondary">💾 セーブ</button><button id="reset" class="action secondary">↻ 最初から</button></div><div class="sub" style="margin-top:14px">正解数：<strong id="solved">0</strong> 問　｜　建物を増やして街を発展させよう！</div></section>
-</main>
-<footer>English Town 3D · 学んで、集めて、街を育てよう！<br>セーブデータはこのブラウザ内に保存されます。</footer><div id="toast"></div>
-<script src="game.js?v=house-geometry-fix-20261118c"></script>
-</body></html>
+<div id="world" aria-label="3Dの街マップ"></div>
+<header id="gameHud">
+  <div class="brand">🏙️ English Town 3D <span>英語で街づくり</span></div>
+  <div class="stats">
+    <div class="stat">⭐ Lv.<span id="level">1</span></div>
+    <div class="stat">🪵 木材 <span id="wood">4</span></div>
+    <div class="stat">🪙 コイン <span id="coin">3</span></div>
+    <div class="stat">👥 人口 <span id="population">0</span></div>
+    <div class="stat">🛣️ 道路 <span id="roads">0</span></div>
+  </div>
+</header>
+<button id="menuToggle" class="menu-toggle" type="button" aria-controls="gameMenu" aria-expanded="false">☰ メニュー</button>
+<aside id="gameMenu" aria-hidden="true">
+  <div class="menu-heading">
+    <div><strong>ゲームメニュー</strong><small>建築・英語クイズ・セーブ</small></div>
+    <button id="closeMenu" class="close-menu" type="button" aria-label="メニューを閉じる">×</button>
+  </div>
+  <section class="menu-section">
+    <h2>🏗️ 街づくり</h2>
+    <p class="sub">建物や道路を選ぶとメニューが閉じるよ。そのあと街の好きな場所をタップしてね。</p>
+    <div id="buildings" class="buildings"></div>
+    <div id="guide" class="sub guide">道路・建物・撤去を選んで、マップをタップしよう。</div>
+  </section>
+  <section class="menu-section">
+    <h2>📚 英語クイズ</h2>
+    <p class="sub">正解すると木材 +1、コイン +1！</p>
+    <div class="quizword">
+      <div class="sub">この英語の意味はどれ？</div>
+      <div class="word-row"><div id="question" class="word">apple</div><button id="speak" class="action speak" aria-label="発音を聞く">🔊</button></div>
+    </div>
+    <div id="answers" class="answers"></div>
+    <div id="feedback" class="feedback" aria-live="polite">正しい意味を選んでね！</div>
+    <div class="actions">
+      <button id="next" class="action" disabled>次の問題 ➜</button>
+      <button id="save" class="action secondary">💾 セーブ</button>
+      <button id="reset" class="action secondary">↻ 最初から</button>
+    </div>
+    <div class="sub solved-line">正解数：<strong id="solved">0</strong> 問</div>
+  </section>
+  <div class="menu-foot">セーブデータはこのブラウザ内に保存されます。</div>
+</aside>
+<div id="toolStatus" aria-live="polite"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="game.js?v=fullscreen-menu-20261118a"></script>
+</body>
+</html>
