@@ -5,7 +5,8 @@ const BUILDINGS=[
 {id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2,cols:3,rows:3},
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5,cols:2,rows:2},
 {id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12,cols:2,rows:3},
-{id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,cols:2,rows:2}
+{id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,cols:2,rows:2},
+{id:'factory',name:'工場',emoji:'🏭',wood:4,coin:3,pop:0,cols:2,rows:2,maxCount:3}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
@@ -27,12 +28,14 @@ toggle.setAttribute('aria-expanded',String(open));
 }
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',bulldozer:'撤去'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',bulldozer:'撤去'};
 el.textContent=state.selected?'選択中：'+labels[state.selected]+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
 function update(){
 document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
+const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
+const quizHint=document.getElementById('quizHint');if(quizHint)quizHint.textContent=factoryCount?'工場で正解すると木材 +1、コイン +1！（工場 '+factoryCount+'/3）':'工場を建てると、クイズ正解で木材 +1・コイン +1を獲得できるよ。';
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -96,11 +99,13 @@ d.grid.forEach((item,i)=>{if(item&&item.id!=='occupied')putMigratedCell(item,(Ma
 function renderMenu(){
 const root=document.getElementById('buildings');root.innerHTML='';
 [...BUILDINGS,ROAD].forEach(b=>{
-const affordable=state.wood>=b.wood&&state.coin>=b.coin;
+const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
+const atLimit=b.id==='factory'&&factoryCount>=(b.maxCount||3);
+const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
-btn.disabled=!affordable&&state.selected!==b.id;
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>人口 +'+b.pop+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
+btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置上限 '+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
@@ -167,6 +172,14 @@ const windowColor=pick([0x85cbed,0x94d9cf,0xfff0a8]);
 for(const x of [-w*.32,w*.32])box(w*.2,h*.28,.04,windowColor,.08+h*.53,x,d/2+.025);
 box(.24,.34,.055,trim,.08+.18,0,d/2+.05);
 }
+if(id==='factory'){
+const w=range(.88,1.02),d=range(.88,1.02),h=range(.72,.9),wall=pick([0x9aa8b5,0xb5b8ad,0x8d9ca5,0xc2b9a7]),trim=pick([0x586b78,0x687d88,0x8b6548]);
+box(w,h,d,wall,.08+h/2);box(w+.08,.12,d+.08,trim,.08+h+.06);
+box(w*.72,.28,.045,0x8bd0e8,.08+h*.58,0,d/2+.025);
+box(w*.22,.38,.06,0x536575,.08+.19,0,d/2+.04);
+const chimney=add(new THREE.Mesh(new THREE.BoxGeometry(.19,.58,.19),mat(0x7b8790)),w*.27,.08+h+.35,-d*.2);box(.25,.07,.25,0x59636c,.08+h+.67,w*.27,-d*.2);
+box(w*.78,.09,d*.72,0xd5d9d8,.08+h+.12);
+}
 if(id==='tower'){
 const floors=3+Math.floor(rand()*4),floorH=range(.38,.52),w=range(.82,1.14),d=range(.82,1.14),h=floors*floorH;
 const facade=pick([0x5ab7dc,0x7394c8,0x7ab9aa,0x9d9cc9,0x8aa6bd,0x7cabbc]),glass=pick([0xe4f8ff,0xbce9f2,0xffe8a8]);
@@ -180,7 +193,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
@@ -281,6 +294,7 @@ toast('🛣️ 道路を敷いたよ！');
 sync();update();save(false);return;
 }
 const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
+if(b.id==='factory'&&state.grid.filter(x=>x&&x.id==='factory').length>=(b.maxCount||3)){toast('工場は最大3個までだよ！');return;}
 const row=Math.floor(i/SIZE),col=i%SIZE;
 if(row+b.rows>SIZE||col+b.cols>SIZE){toast('建物の'+b.cols+'×'+b.rows+'マスがマップ内に収まる場所を選んでね');return;}
 const footprint=[];
@@ -298,7 +312,7 @@ else toast(b.name+'を'+b.cols+'×'+b.rows+'マスで建てたよ！');
 sync();update();save(false);
 }
 function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
-function answer(opt,btn){if(state.answered)return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.wood++;state.coin++;state.solved++;document.getElementById('feedback').textContent='🎉 正解！ '+state.current[0]+' = '+state.current[1]+'　木材とコインを1つずつゲット！';}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
+function answer(opt,btn){if(state.answered)return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.solved++;const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;if(factoryCount>0){state.wood++;state.coin++;document.getElementById('feedback').textContent='🎉 工場で正解！ '+state.current[0]+' = '+state.current[1]+'　木材とコインを1つずつゲット！';}else{document.getElementById('feedback').textContent='正解！ '+state.current[0]+' = '+state.current[1]+'。報酬を受け取るには工場を建てよう！';}}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
 document.getElementById('speak').addEventListener('click',()=>{if(!state.current)return;if(!('speechSynthesis'in window)){toast('このブラウザでは発音機能を使えません');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(state.current[0]);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)});
 document.getElementById('next').addEventListener('click',nextQuiz);document.getElementById('save').addEventListener('click',()=>save(true));
 document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!document.getElementById('gameMenu').classList.contains('open')));
