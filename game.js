@@ -35,6 +35,7 @@ nextQuiz();
 document.getElementById('feedback').textContent='🏭 工場でクイズに挑戦！正解すると木材 +1、コイン +1をゲット！';
 setMenuOpen(true);
 update();
+requestAnimationFrame(()=>{const section=document.getElementById('quizSection');if(section)section.scrollIntoView({behavior:'smooth',block:'start'});});
 }
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
@@ -119,7 +120,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong><small>🪵'+b.wood+'　🪙'+b.coin+'</small>'+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
@@ -244,6 +245,8 @@ const spec=BUILDINGS.find(b=>b.id===id);const offset=id==='road'?0:(spec.cols-1)
 m.position.set(p.x+offset,.08,p.z+offset);
 const target=id==='road'?1:1.3;
 m.userData.targetScale=target;
+m.userData.cellIndex=i;
+m.userData.buildingId=id;
 // 道路は最初から1マス分の実寸で表示し、出現アニメーションで縮んで見える状態を避ける。
 if(id==='road')m.scale.set(1,1,1);else m.scale.set(.02,.02,.02);
 scene.add(m);meshes[i]=m;
@@ -257,7 +260,7 @@ scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE
 const ground=new THREE.Mesh(new THREE.BoxGeometry(20.5,.5,20.5),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
 const offset=(SIZE-1)*CELL_SPACING/2;
 for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE,.12,CELL_SIZE),new THREE.MeshStandardMaterial({color:0xb8c4b5,roughness:.95}));tile.position.set(c*CELL_SPACING-offset,0,r*CELL_SPACING-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
-raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(state.selected!=='bulldozer'){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(anchor);return;}}place(index)}});
+raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const buildingHits=raycaster.intersectObjects(meshes.filter(Boolean),true);if(state.selected!=='bulldozer'&&buildingHits.length){let root=buildingHits[0].object;while(root&&root!==scene&&!Number.isInteger(root.userData.cellIndex))root=root.parent;if(root&&root!==scene&&root.userData.buildingId==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(root.userData.cellIndex);return;}}const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(state.selected!=='bulldozer'){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(anchor);return;}}place(index)}});
 window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight;camera.aspect=ww/hh;camera.updateProjectionMatrix();renderer.setSize(ww,hh)});
 sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<(m.userData.targetScale||1)-.005){const target=m.userData.targetScale||1;m.scale.x+=(target-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(target-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
 }
