@@ -6,7 +6,10 @@ const BUILDINGS=[
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5,cols:2,rows:2},
 {id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12,cols:2,rows:3},
 {id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,cols:2,rows:2},
-{id:'factory',name:'工場',emoji:'🏭',wood:0,coin:0,pop:0,cols:2,rows:2,maxCount:3}
+{id:'factory',name:'工場',emoji:'🏭',wood:0,coin:0,pop:0,cols:2,rows:2,maxCount:3},
+{id:'police_hq',name:'警察本部',emoji:'🏢',wood:8,coin:8,pop:0,cols:3,rows:3,coverage:4,coverageRank:1},
+{id:'police_station',name:'警察署',emoji:'🚔',wood:5,coin:4,pop:0,cols:2,rows:2,coverage:8,coverageRank:2},
+{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:12,coverageRank:3}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
@@ -20,6 +23,7 @@ const QUIZ=[
 ];
 let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,current:null,answered:false,activeFactory:null};
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
+let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
@@ -50,6 +54,9 @@ el.classList.toggle('show',!!state.selected);
 }
 function update(){
 document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
+const protectedCount=calculatePoliceCoverage().filter(rank=>rank>0).length;
+const summary=document.getElementById('policeCoverageSummary');if(summary)summary.textContent='警察の効果範囲内：'+protectedCount+' / '+TOTAL+'マス';
+const toggle=document.getElementById('coverageToggle');if(toggle)toggle.textContent='🛡️ 効果範囲表示：'+(policeCoverageVisible?'ON':'OFF');
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -119,7 +126,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>🛡️ 半径 '+b.coverage+'マス</small>':'')+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
@@ -194,6 +201,15 @@ box(w*.22,.38,.06,0x536575,.08+.19,0,d/2+.04);
 const chimney=add(new THREE.Mesh(new THREE.BoxGeometry(.19,.58,.19),mat(0x7b8790)),w*.27,.08+h+.35,-d*.2);box(.25,.07,.25,0x59636c,.08+h+.67,w*.27,-d*.2);
 box(w*.78,.09,d*.72,0xd5d9d8,.08+h+.12);
 }
+if(id==='police_hq'){
+const w=1.62,d=1.62,h=1.02;box(w,h,d,0xe7edf4,.08+h/2);box(w+.08,.12,d+.08,0x315b83,.08+h+.06);box(w*.72,.38,.05,0x79c8e8,.08+h*.58,0,d/2+.03);box(w*.24,.48,.06,0x315b83,.08+.24,0,d/2+.04);box(w*.86,.08,d*.82,0xffffff,.08+h+.15);box(.36,.18,.08,0xf3d56a,.08+h+.26,0,d/2+.05);
+}
+if(id==='police_station'){
+const w=1.02,d=1.02,h=.78;box(w,h,d,0xe5edf2,.08+h/2);box(w+.07,.11,d+.07,0x315b83,.08+h+.05);box(w*.68,.25,.045,0x7fc8e5,.08+h*.58,0,d/2+.025);box(w*.2,.36,.05,0x315b83,.08+.18,0,d/2+.04);box(w*.76,.07,d*.7,0xffffff,.08+h+.14);
+}
+if(id==='koban'){
+const w=.46,d=.46,h=.62;box(w,h,d,0xf1f4f6,.08+h/2);box(w+.04,.09,d+.04,0x315b83,.08+h+.045);box(w*.72,.18,.035,0x74c7e6,.08+h*.55,0,d/2+.02);box(w*.2,.28,.04,0x315b83,.08+.14,0,d/2+.03);box(w*.84,.05,d*.8,0xffffff,.08+h+.12);
+}
 if(id==='tower'){
 const floors=3+Math.floor(rand()*4),floorH=range(.38,.52),w=range(.82,1.14),d=range(.82,1.14),h=floors*floorH;
 const facade=pick([0x5ab7dc,0x7394c8,0x7ab9aa,0x9d9cc9,0x8aa6bd,0x7cabbc]),glass=pick([0xe4f8ff,0xbce9f2,0xffe8a8]);
@@ -207,7 +223,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
@@ -231,6 +247,42 @@ if(horizontal)dash(true);
 if(vertical)dash(false);
 return g;
 }
+function calculatePoliceCoverage(){
+const ranks=Array(TOTAL).fill(0);
+state.grid.forEach((item,anchor)=>{
+if(!item||item.id==='occupied')return;
+const police=BUILDINGS.find(b=>b.id===item.id&&b.coverage);
+if(!police)return;
+const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
+const centerRow=row+(police.rows-1)/2,centerCol=col+(police.cols-1)/2;
+const reach=Math.ceil(police.coverage);
+for(let r=Math.max(0,Math.floor(centerRow-reach));r<=Math.min(SIZE-1,Math.ceil(centerRow+reach));r++){
+for(let c=Math.max(0,Math.floor(centerCol-reach));c<=Math.min(SIZE-1,Math.ceil(centerCol+reach));c++){
+if(Math.hypot(r-centerRow,c-centerCol)<=police.coverage){const index=r*SIZE+c;ranks[index]=Math.max(ranks[index],police.coverageRank);}
+}
+}
+});
+return ranks;
+}
+function refreshPoliceCoverage(){
+if(!scene||!tiles.length)return;
+if(policeCoverageGroup){scene.remove(policeCoverageGroup);policeCoverageGroup=null;}
+policeCoverageRanks=calculatePoliceCoverage();
+if(!policeCoverageVisible)return;
+policeCoverageGroup=new THREE.Group();
+const materials={
+1:new THREE.MeshBasicMaterial({color:0x5da9e8,transparent:true,opacity:.28,depthWrite:false}),
+2:new THREE.MeshBasicMaterial({color:0x43b58b,transparent:true,opacity:.28,depthWrite:false}),
+3:new THREE.MeshBasicMaterial({color:0xe6ad45,transparent:true,opacity:.30,depthWrite:false})
+};
+const planeGeometry=new THREE.PlaneGeometry(CELL_SIZE*.96,CELL_SIZE*.96);
+policeCoverageRanks.forEach((rank,i)=>{
+if(!rank)return;
+const tile=tiles[i],overlay=new THREE.Mesh(planeGeometry,materials[rank]);
+overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.073,tile.position.z);overlay.renderOrder=2;policeCoverageGroup.add(overlay);
+});
+scene.add(policeCoverageGroup);
+}
 function sync(){
 for(let i=0;i<TOTAL;i++){
 const item=state.grid[i];
@@ -250,6 +302,7 @@ m.userData.buildingId=id;
 if(id==='road')m.scale.set(1,1,1);else m.scale.set(.02,.02,.02);
 scene.add(m);meshes[i]=m;
 });
+refreshPoliceCoverage();
 }
 function init3D(){
 const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
@@ -334,6 +387,7 @@ document.getElementById('speak').addEventListener('click',()=>{if(!state.current
 document.getElementById('next').addEventListener('click',nextQuiz);document.getElementById('save').addEventListener('click',()=>save(true));
 document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!document.getElementById('gameMenu').classList.contains('open')));
 document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
+document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
 document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
 document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
