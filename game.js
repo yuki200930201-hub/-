@@ -23,19 +23,21 @@ let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
-if(!open)state.activeFactory=null;
 menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
 toggle.setAttribute('aria-expanded',String(open));
-if(open){const hint=document.getElementById('quizHint');if(hint){const count=state.grid.filter(x=>x&&x.id==='factory').length;hint.textContent=Number.isInteger(state.activeFactory)?'🏭 工場を選択中：正解すると木材 +1、コイン +1！（工場 '+count+'/3）':count?'街の工場をタップしてクイズ開始！（工場 '+count+'/3）':'まず工場を建てよう。工場をタップして正解すると木材 +1、コイン +1！';}}
+}
+function setFactoryQuizOpen(open){
+const panel=document.getElementById('factoryQuizPanel');
+panel.classList.toggle('open',open);
+panel.setAttribute('aria-hidden',String(!open));
+if(!open)state.activeFactory=null;
 }
 function startFactoryQuiz(anchor){
 if(!Number.isInteger(anchor)||!state.grid[anchor]||state.grid[anchor].id!=='factory')return;
 state.activeFactory=anchor;
 nextQuiz();
 document.getElementById('feedback').textContent='🏭 工場でクイズに挑戦！正解すると木材 +1、コイン +1をゲット！';
-setMenuOpen(true);
-update();
-requestAnimationFrame(()=>{const section=document.getElementById('quizSection');if(section)section.scrollIntoView({behavior:'smooth',block:'start'});});
+setFactoryQuizOpen(true);
 }
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
@@ -45,12 +47,6 @@ el.classList.toggle('show',!!state.selected);
 }
 function update(){
 document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
-const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
-const quizHint=document.getElementById('quizHint');
-if(quizHint){
-if(Number.isInteger(state.activeFactory)&&state.grid[state.activeFactory]&&state.grid[state.activeFactory].id==='factory')quizHint.textContent='🏭 工場を選択中：正解すると木材 +1、コイン +1！（工場 '+factoryCount+'/3）';
-else quizHint.textContent=factoryCount?'街の工場をタップしてクイズ開始！（工場 '+factoryCount+'/3）':'まず工場を建てよう。工場をタップして正解すると木材 +1、コイン +1！';
-}
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -330,12 +326,14 @@ else toast(b.name+'を'+b.cols+'×'+b.rows+'マスで建てたよ！');
 sync();update();save(false);
 }
 function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
-function answer(opt,btn){if(state.answered)return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.solved++;const atFactory=Number.isInteger(state.activeFactory)&&state.grid[state.activeFactory]&&state.grid[state.activeFactory].id==='factory';if(atFactory){state.wood++;state.coin++;document.getElementById('feedback').textContent='🎉 工場で正解！ '+state.current[0]+' = '+state.current[1]+'　木材 +1、コイン +1をゲット！';}else{document.getElementById('feedback').textContent='正解！報酬を受け取るには、街の工場をタップしてクイズに挑戦しよう。';}}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
+function answer(opt,btn){if(state.answered||!Number.isInteger(state.activeFactory)||!state.grid[state.activeFactory]||state.grid[state.activeFactory].id!=='factory')return;state.answered=true;const ok=opt===state.current[1];document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===state.current[1])b.classList.add('correct')});if(ok){state.solved++;const atFactory=Number.isInteger(state.activeFactory)&&state.grid[state.activeFactory]&&state.grid[state.activeFactory].id==='factory';if(atFactory){state.wood++;state.coin++;document.getElementById('feedback').textContent='🎉 工場で正解！ '+state.current[0]+' = '+state.current[1]+'　木材 +1、コイン +1をゲット！';}else{document.getElementById('feedback').textContent='正解！報酬を受け取るには、街の工場をタップしてクイズに挑戦しよう。';}}else{btn.classList.add('wrong');document.getElementById('feedback').textContent='おしい！ 正解は「'+state.current[1]+'」だよ。次も挑戦しよう！'}document.getElementById('next').disabled=false;update();save(false)}
 document.getElementById('speak').addEventListener('click',()=>{if(!state.current)return;if(!('speechSynthesis'in window)){toast('このブラウザでは発音機能を使えません');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(state.current[0]);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)});
 document.getElementById('next').addEventListener('click',nextQuiz);document.getElementById('save').addEventListener('click',()=>save(true));
 document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!document.getElementById('gameMenu').classList.contains('open')));
 document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
-document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenuOpen(false)});
-document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;state.activeFactory=null;meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);update();save(false);toast('新しい街をスタート！')});
+document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
+document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
+document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;state.activeFactory=null;setFactoryQuizOpen(false);meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);update();save(false);toast('新しい街をスタート！')});
 load();update();init3D();nextQuiz();save(false);
 })();
