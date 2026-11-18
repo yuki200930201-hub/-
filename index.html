@@ -26,7 +26,7 @@
 <button id="menuToggle" class="menu-toggle" type="button" aria-controls="gameMenu" aria-expanded="false">☰ メニュー</button>
 <aside id="gameMenu" aria-hidden="true">
   <div class="menu-heading">
-    <div><strong>ゲームメニュー</strong><small>建築・英語クイズ・セーブ</small></div>
+    <div><strong>ゲームメニュー</strong><small>建築・データ管理</small></div>
     <button id="closeMenu" class="close-menu" type="button" aria-label="メニューを閉じる">×</button>
   </div>
   <section class="menu-section">
@@ -35,7 +35,22 @@
     <div id="buildings" class="buildings"></div>
     <div id="guide" class="sub guide">道路・建物・撤去を選んで、マップをタップしよう。</div>
   </section>
-  <section class="menu-section" id="quizSection">
+  <section class="menu-section">
+    <h2>💾 データ管理</h2>
+    <div class="actions">
+      <button id="save" class="action secondary">💾 セーブ</button>
+      <button id="reset" class="action secondary">↻ 最初から</button>
+    </div>
+  </section>
+  <div class="menu-foot">セーブデータはこのブラウザ内に保存されます。</div>
+</aside>
+<div id="factoryQuizPanel" aria-hidden="true">
+  <div class="factory-quiz-card">
+    <div class="factory-quiz-heading">
+      <div><strong>🏭 工場の英語クイズ</strong><small>正解すると木材 +1、コイン +1！</small></div>
+      <button id="closeFactoryQuiz" class="close-menu" type="button" aria-label="クイズを閉じる">×</button>
+    </div>
+      <section class="factory-quiz-content">
     <h2>📚 英語クイズ</h2>
     <p class="sub" id="quizHint">まず工場を建てよう。工場をタップして正解すると木材 +1、コイン +1！</p>
     <div class="quizword">
@@ -51,10 +66,11 @@
     </div>
     <div class="sub solved-line">正解数：<strong id="solved">0</strong> 問</div>
   </section>
-  <div class="menu-foot">セーブデータはこのブラウザ内に保存されます。</div>
-</aside>
+
+  </div>
+</div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=factory-direct-quiz-20261118c"></script>
+<script src="game.js?v=factory-standalone-quiz-20261118d"></script>
 </body>
 </html>
