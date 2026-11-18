@@ -84,3 +84,6 @@ button.secondary{background:#e9eff4;color:#536273}
 .factory-quiz-content .feedback{font-size:13px;min-height:44px}
 .factory-quiz-content .actions{margin-top:12px}
 @media(max-width:520px){#factoryQuizPanel{padding:10px}.factory-quiz-card{padding:13px}.factory-quiz-heading{top:-13px;margin:-13px -13px 12px;padding:12px 13px}}
+
+/* 警察施設の効果範囲表示 */
+#policeCoverageSummary{margin:7px 0;font-weight:800;color:#45627c}
