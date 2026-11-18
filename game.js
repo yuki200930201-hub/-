@@ -26,6 +26,7 @@ const menu=document.getElementById('gameMenu'),toggle=document.getElementById('m
 if(!open)state.activeFactory=null;
 menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
 toggle.setAttribute('aria-expanded',String(open));
+if(open){const hint=document.getElementById('quizHint');if(hint){const count=state.grid.filter(x=>x&&x.id==='factory').length;hint.textContent=Number.isInteger(state.activeFactory)?'🏭 工場を選択中：正解すると木材 +1、コイン +1！（工場 '+count+'/3）':count?'街の工場をタップしてクイズ開始！（工場 '+count+'/3）':'まず工場を建てよう。工場をタップして正解すると木材 +1、コイン +1！';}}
 }
 function startFactoryQuiz(anchor){
 if(!Number.isInteger(anchor)||!state.grid[anchor]||state.grid[anchor].id!=='factory')return;
@@ -256,7 +257,7 @@ scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE
 const ground=new THREE.Mesh(new THREE.BoxGeometry(20.5,.5,20.5),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
 const offset=(SIZE-1)*CELL_SPACING/2;
 for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE,.12,CELL_SIZE),new THREE.MeshStandardMaterial({color:0xb8c4b5,roughness:.95}));tile.position.set(c*CELL_SPACING-offset,0,r*CELL_SPACING-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
-raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(!state.selected){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){startFactoryQuiz(anchor);return;}}place(index)}});
+raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(state.selected!=='bulldozer'){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(anchor);return;}}place(index)}});
 window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight;camera.aspect=ww/hh;camera.updateProjectionMatrix();renderer.setSize(ww,hh)});
 sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<(m.userData.targetScale||1)-.005){const target=m.userData.targetScale||1;m.scale.x+=(target-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(target-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
 }
