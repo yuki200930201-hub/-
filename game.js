@@ -6,7 +6,7 @@ const BUILDINGS=[
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5,cols:2,rows:2},
 {id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12,cols:2,rows:3},
 {id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,cols:2,rows:2},
-{id:'factory',name:'工場',emoji:'🏭',wood:4,coin:3,pop:0,cols:2,rows:2,maxCount:3}
+{id:'factory',name:'工場',emoji:'🏭',wood:0,coin:0,pop:0,cols:2,rows:2,maxCount:3}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
