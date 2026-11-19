@@ -560,6 +560,6 @@ document.getElementById('pollutionToggle').addEventListener('click',()=>{polluti
 document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
 document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
-document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;state.activeFactory=null;setFactoryQuizOpen(false);meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);update();save(false);toast('新しい街をスタート！')});
+document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;state.activeFactory=null;setFactoryQuizOpen(false);meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);sync();update();save(false);toast('新しい街をスタート！')});
 load();update();init3D();save(false);
 })();
