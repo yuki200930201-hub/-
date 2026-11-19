@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<link rel="stylesheet" href="style.css?v=half-refund-demolition-20261119i">
+<link rel="stylesheet" href="style.css?v=build-demolish-confirm-20261119j">
 </head>
 <body>
 <div id="world" aria-label="3Dの街マップ"></div>
@@ -96,8 +96,21 @@
 
   </div>
 </div>
+<div id="actionConfirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-hidden="true">
+  <div class="action-confirm-card">
+    <div class="action-confirm-heading">
+      <span class="action-confirm-icon">🏗️</span>
+      <div><strong id="confirmTitle">実行しますか？</strong><p id="confirmMessage">内容を確認してください。</p></div>
+    </div>
+    <div id="confirmDetails" class="action-confirm-details"></div>
+    <div class="action-confirm-buttons">
+      <button id="cancelAction" class="action-confirm-cancel" type="button">キャンセル</button>
+      <button id="confirmAction" class="action-confirm-yes" type="button">実行する</button>
+    </div>
+  </div>
+</div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=half-refund-demolition-20261119i"></script>
+<script src="game.js?v=build-demolish-confirm-20261119j"></script>
 </body>
 </html>
