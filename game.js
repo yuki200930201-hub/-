@@ -150,9 +150,10 @@ const groups=[
 {name:'水道',emoji:'💧',ids:['water_tower','water_tank','pumping_station']},
 {name:'発電',emoji:'⚡',ids:['wind_plant','coal_plant','large_wind_plant','solar_plant','oil_plant','nuclear_plant','fusion_plant']},
 {name:'産業',emoji:'🏭',ids:['factory']},
-{name:'道路',emoji:'🛣️',ids:['road']}
+{name:'道路',emoji:'🛣️',ids:['road']},
+{name:'ツール',emoji:'🧰',ids:['bulldozer']}
 ];
-const expandedGroups=renderMenu.expanded||(renderMenu.expanded={'住宅・商業':true});
+const active=groups.find(group=>group.name===renderMenu.activeCategory);
 function makeBuildButton(b){
 const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
 const atLimit=b.id==='factory'&&factoryCount>=(b.maxCount||3);
@@ -165,34 +166,44 @@ btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
+renderMenu.activeCategory=null;
 renderMenu();updateToolStatus();setMenuOpen(false);
 });
 return btn;
 }
+if(!active){
+const title=document.createElement('div');title.className='category-view-heading';title.textContent='建てたいもののカテゴリを選んでね';root.appendChild(title);
+const picker=document.createElement('div');picker.className='category-picker';
 groups.forEach(group=>{
-const wrap=document.createElement('div');wrap.className='building-category';
-const header=document.createElement('button');header.className='building-category-header';header.type='button';
-header.innerHTML='<span>'+group.emoji+' '+group.name+' <small>('+group.ids.length+')</small></span><span class="category-arrow">'+(expandedGroups[group.name]?'▼':'▶')+'</span>';
-header.setAttribute('aria-expanded',String(!!expandedGroups[group.name]));
-header.addEventListener('click',()=>{expandedGroups[group.name]=!expandedGroups[group.name];renderMenu();});
-wrap.appendChild(header);
-if(expandedGroups[group.name]){
-const grid=document.createElement('div');grid.className='buildings category-buildings';
-group.ids.forEach(id=>{const b=id==='road'?ROAD:BUILDINGS.find(x=>x.id===id);if(b)grid.appendChild(makeBuildButton(b));});
-wrap.appendChild(grid);
-}
-root.appendChild(wrap);
+const tile=document.createElement('button');tile.type='button';tile.className='category-picker-item';
+tile.innerHTML='<span class="category-picker-icon">'+group.emoji+'</span><strong>'+group.name+'</strong><small>'+group.ids.length+'種類</small>';
+tile.addEventListener('click',()=>{renderMenu.activeCategory=group.name;renderMenu();});
+picker.appendChild(tile);
 });
-const tools=document.createElement('div');tools.className='building-category tool-category';
-const toolHeading=document.createElement('div');toolHeading.className='building-category-label';toolHeading.textContent='🧰 ツール';tools.appendChild(toolHeading);
+root.appendChild(picker);
+}else{
+const top=document.createElement('div');top.className='category-detail-top';
+const back=document.createElement('button');back.type='button';back.className='category-back';back.textContent='‹ カテゴリ一覧';
+back.addEventListener('click',()=>{renderMenu.activeCategory=null;renderMenu();});
+const heading=document.createElement('div');heading.className='category-detail-heading';heading.innerHTML='<span>'+active.emoji+'</span><strong>'+active.name+'</strong><small>'+active.ids.length+'種類</small>';
+top.append(back,heading);root.appendChild(top);
+if(active.name==='ツール'){
+const grid=document.createElement('div');grid.className='buildings category-buildings';
 const erase=document.createElement('button');erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
 erase.innerHTML='<span class="emoji">🚜</span><strong>撤去</strong><small>費用なし</small><small>道路・建物を撤去</small>';
 erase.addEventListener('click',()=>{
 state.selected=state.selected==='bulldozer'?null:'bulldozer';
 document.getElementById('guide').textContent=state.selected?'撤去ツール：マスをタップして道路や建物を取り除こう。':'ツールを選んでマップをタップしよう。';
-renderMenu();updateToolStatus();setMenuOpen(false);
+renderMenu.activeCategory=null;renderMenu();updateToolStatus();setMenuOpen(false);
 });
-tools.appendChild(erase);root.appendChild(tools);
+grid.appendChild(erase);root.appendChild(grid);
+}else{
+const grid=document.createElement('div');grid.className='buildings category-buildings';
+groupItems(active).forEach(b=>grid.appendChild(makeBuildButton(b)));
+root.appendChild(grid);
+}
+}
+function groupItems(group){return group.ids.map(id=>id==='road'?ROAD:BUILDINGS.find(b=>b.id===id)).filter(Boolean)}
 }
 function seededRandom(seed){
 let x=(Number(seed)||1)>>>0;
