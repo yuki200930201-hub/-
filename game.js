@@ -358,7 +358,7 @@ const ball=new THREE.Mesh(dropBall,waterMat);ball.position.y=.02;marker.add(ball
 const tip=new THREE.Mesh(dropTip,waterMat);tip.position.y=.105;marker.add(tip);
 const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
 const offset=(2-1)*CELL_SPACING/2;
-marker.position.set(tile.position.x+offset+.18,1.35,tile.position.z+offset+.18);
+marker.position.set(tile.position.x+offset+.18,1.9,tile.position.z+offset+.18);
 marker.renderOrder=5;waterIndicatorsGroup.add(marker);
 });
 scene.add(waterIndicatorsGroup);
