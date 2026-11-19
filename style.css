@@ -146,3 +146,19 @@ button.secondary{background:#e9eff4;color:#536273}
 /* システムの説明は対応カテゴリを選んだときだけ表示 */
 .system-info-item[hidden]{display:none!important}
 .system-info-item{margin-top:0;padding-top:12px;border-top:1px solid #e8eef1}
+
+/* 建設・撤去の実行前確認ダイアログ */
+#actionConfirm{position:fixed;z-index:30;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:#17253688;backdrop-filter:blur(5px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s,visibility .18s}
+#actionConfirm.open{opacity:1;visibility:visible;pointer-events:auto}
+.action-confirm-card{width:min(390px,calc(100vw - 30px));padding:18px;border:1px solid #ffffffdf;border-radius:20px;background:#fff;box-shadow:0 22px 70px #13263b66}
+.action-confirm-heading{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.action-confirm-icon{flex:0 0 auto;width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#edf6fc;font-size:25px}
+.action-confirm-heading strong{display:block;color:#354d65;font-size:16px;line-height:1.35}
+.action-confirm-heading p{margin:4px 0 0;color:#78899a;font-size:12px;line-height:1.5}
+.action-confirm-details{padding:11px 12px;border-radius:12px;background:#f3f8fb;color:#486176;font-size:13px;font-weight:800;line-height:1.6;white-space:pre-wrap}
+.action-confirm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.action-confirm-buttons button{min-height:42px;border:0;border-radius:11px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.action-confirm-cancel{background:#eaf0f4;color:#52677a}
+.action-confirm-yes{background:#4b9fd0;color:#fff}
+.action-confirm-buttons button:active{transform:scale(.98)}
+@media(max-width:520px){.action-confirm-card{padding:15px}.action-confirm-heading strong{font-size:15px}}
