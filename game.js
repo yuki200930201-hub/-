@@ -7,9 +7,9 @@ const BUILDINGS=[
 {id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12,cols:2,rows:3},
 {id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,cols:2,rows:2},
 {id:'factory',name:'工場',emoji:'🏭',wood:0,coin:0,pop:0,cols:2,rows:2,maxCount:3},
-{id:'police_hq',name:'警察本部',emoji:'🏢',wood:8,coin:8,pop:0,cols:3,rows:3,coverage:4,coverageRank:1},
+{id:'police_hq',name:'警察本部',emoji:'🏢',wood:8,coin:8,pop:0,cols:3,rows:3,coverage:12,coverageRank:3},
 {id:'police_station',name:'警察署',emoji:'🚔',wood:5,coin:4,pop:0,cols:2,rows:2,coverage:8,coverageRank:2},
-{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:12,coverageRank:3}
+{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:4,coverageRank:1}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
