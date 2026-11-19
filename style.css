@@ -124,3 +124,21 @@ button.secondary{background:#e9eff4;color:#536273}
 .category-detail-heading strong{font-size:14px}
 .category-detail-heading small{font-size:10px;color:#8293a2}
 .category-detail-top+.buildings{margin-top:6px}
+
+/* レイアウト修正：カテゴリ選択と建物一覧を親グリッドの1セルに閉じ込めない */
+.building-menu-content{display:block;width:100%;min-width:0}
+.category-picker{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.category-picker-item{width:100%;aspect-ratio:1/1;min-height:0;padding:8px 5px;border-radius:15px}
+.category-picker-icon{font-size:clamp(25px,3vw,34px)}
+.category-buildings{width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:7px}
+.category-buildings .build{min-height:112px;padding:8px 5px}
+.category-buildings .build strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.category-buildings .build small{font-size:10px;line-height:1.3;overflow-wrap:anywhere}
+@media(max-width:520px){
+ .category-picker{gap:6px}
+ .category-picker-item{border-radius:12px;padding:6px 3px}
+ .category-buildings{gap:6px;padding:5px}
+ .category-buildings .build{min-height:104px;padding:6px 3px}
+ .category-buildings .build strong{font-size:11px}
+ .category-buildings .build small{font-size:9px}
+}
