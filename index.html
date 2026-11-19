@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<link rel="stylesheet" href="style.css?v=healthcare-coverage-20261119a">
+<link rel="stylesheet" href="style.css?v=water-capacity-20261119a">
 </head>
 <body>
 <div id="world" aria-label="3Dの街マップ"></div>
@@ -50,6 +50,13 @@
     <div class="sub">🟦 診療所：半径4マス　🔵 病院：半径8マス　🟣 大学病院：半径12マス</div>
   </section>
   <section class="menu-section">
+    <h2>💧 水道システム</h2>
+    <p class="sub">水道管や効果範囲は使わず、施設の給水能力の合計で住宅へ水を供給するよ。能力が大きい施設ほど、より多くの住宅を給水できるよ。</p>
+    <div class="sub" id="waterSupplySummary">給水済み住宅：0/0軒（給水能力：0軒）</div>
+    <div class="sub">🗼 貯水塔：5軒　🛢️ 貯水槽：10軒　🚰 ポンプ場：20軒</div>
+    <div class="sub">給水された住宅には青い水滴マークが付くよ。</div>
+  </section>
+  <section class="menu-section">
     <h2>💾 データ管理</h2>
     <div class="actions">
       <button id="save" class="action secondary">💾 セーブ</button>
@@ -83,6 +90,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=healthcare-coverage-20261119a"></script>
+<script src="game.js?v=water-capacity-20261119a"></script>
 </body>
 </html>
