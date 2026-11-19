@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<link rel="stylesheet" href="style.css?v=police-coverage-20261119a">
+<link rel="stylesheet" href="style.css?v=police-coverage-reversed-20261119b">
 </head>
 <body>
 <div id="world" aria-label="3Dの街マップ"></div>
@@ -40,7 +40,7 @@
     <p class="sub">各警察施設の周囲を個別に守るよ。警察本部→警察署→交番の順に効果範囲が広くなる設定。</p>
     <div class="sub" id="policeCoverageSummary">警察の効果範囲内：0 / 1296マス</div>
     <div class="actions"><button id="coverageToggle" class="action secondary">🛡️ 効果範囲表示：ON</button></div>
-    <div class="sub">🔵 警察本部：半径4マス　🟢 警察署：半径8マス　🟡 交番：半径12マス</div>
+    <div class="sub">🔵 警察本部：半径12マス　🟢 警察署：半径8マス　🟡 交番：半径4マス</div>
   </section>
   <section class="menu-section">
     <h2>💾 データ管理</h2>
@@ -76,6 +76,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=police-coverage-20261119a"></script>
+<script src="game.js?v=police-coverage-reversed-20261119b"></script>
 </body>
 </html>
