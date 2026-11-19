@@ -556,6 +556,7 @@ document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!
 document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
 document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
 document.getElementById('healthCoverageToggle').addEventListener('click',()=>{healthCoverageVisible=!healthCoverageVisible;refreshHealthCoverage();update();});
+document.getElementById('pollutionToggle').addEventListener('click',()=>{pollutionVisible=!pollutionVisible;refreshPollutionCoverage();update();});
 document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
 document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
