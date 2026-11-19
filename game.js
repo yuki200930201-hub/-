@@ -36,10 +36,32 @@ const QUIZ=[
 ];
 let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,current:null,answered:false,activeFactory:null};
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
+let pendingAction=null;
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
 let healthCoverageVisible=true,healthCoverageGroup=null,healthCoverageRanks=Array(TOTAL).fill(0);
 let waterIndicatorsGroup=null,powerIndicatorsGroup=null;
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
+function showActionConfirm(title,message,details,confirmLabel,onConfirm){
+pendingAction=onConfirm;
+document.getElementById('confirmTitle').textContent=title;
+document.getElementById('confirmMessage').textContent=message;
+document.getElementById('confirmDetails').textContent=details;
+document.getElementById('confirmAction').textContent=confirmLabel;
+const panel=document.getElementById('actionConfirm');
+panel.classList.add('open');
+panel.setAttribute('aria-hidden','false');
+}
+function closeActionConfirm(){
+const panel=document.getElementById('actionConfirm');
+panel.classList.remove('open');
+panel.setAttribute('aria-hidden','true');
+pendingAction=null;
+}
+function runConfirmedAction(){
+const action=pendingAction;
+closeActionConfirm();
+if(action)action();
+}
 function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
 menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
@@ -565,29 +587,21 @@ const anchor=resolveAnchor(i);
 if(anchor<0){toast('ここには撤去するものがないよ');return;}
 const item=state.grid[anchor];
 if(item.id==='road'){
-const refundCoin=Math.floor((ROAD.coin||0)/2),refundWood=Math.floor((ROAD.wood||0)/2);
-state.coin+=refundCoin;state.wood+=refundWood;state.grid[anchor]=null;
-toast('道路を撤去！ 木材 +'+refundWood+'、コイン +'+refundCoin+'（半額返金）');
-}
-else{
-if(state.activeFactory===anchor)state.activeFactory=null;
+const refundWood=Math.floor((ROAD.wood||0)/2),refundCoin=Math.floor((ROAD.coin||0)/2);
+showActionConfirm('道路を撤去しますか？','この道路を撤去してもいい？','返金：木材 +'+refundWood+' ／ コイン +'+refundCoin,'撤去する',()=>demolishAt(anchor));
+}else{
 const b=BUILDINGS.find(x=>x.id===item.id);
-if(b){
-state.population=Math.max(0,state.population-b.pop);
+if(!b){toast('この場所は撤去できないよ');return;}
 const refundWood=Math.floor((b.wood||0)/2),refundCoin=Math.floor((b.coin||0)/2);
-state.wood+=refundWood;state.coin+=refundCoin;
-clearBuilding(anchor);toast('建物を撤去！ 木材 +'+refundWood+'、コイン +'+refundCoin+'（半額返金）');
-}else clearBuilding(anchor);
+showActionConfirm(b.name+'を撤去しますか？','この建物を撤去してもいい？','返金：木材 +'+refundWood+' ／ コイン +'+refundCoin,'撤去する',()=>demolishAt(anchor));
 }
-state.level=Math.max(1,Math.floor(state.population/15)+1);
-sync();update();save(false);return;
+return;
 }
 if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
 if(state.selected==='road'){
 if(state.coin<ROAD.coin){toast('コインが足りないよ！英語クイズに挑戦しよう');return;}
-state.coin-=ROAD.coin;state.grid[i]={id:'road'};
-toast('🛣️ 道路を敷いたよ！');
-sync();update();save(false);return;
+showActionConfirm('道路を敷きますか？','このマスに道路を建設してもいい？','費用：コイン '+ROAD.coin,'建設する',()=>buildRoadAt(i));
+return;
 }
 const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
 if(b.id==='factory'&&state.grid.filter(x=>x&&x.id==='factory').length>=(b.maxCount||3)){toast('工場は最大3個までだよ！');return;}
@@ -598,6 +612,27 @@ for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++)footprint.push((row+dr)*
 if(footprint.some(index=>state.grid[index])){toast('建物は'+b.cols+'×'+b.rows+'マス必要だよ。空いている場所を選んでね！');return;}
 if(!hasAdjacentRoad(i,b)){toast('建物の'+b.cols+'×'+b.rows+'マスの外周に道路をつなげよう！');return;}
 if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');return;}
+const cost=b.id==='factory'?'費用：無料':'費用：木材 '+b.wood+' ／ コイン '+b.coin;
+showActionConfirm(b.name+'を建設しますか？','この場所に'+b.name+'を建ててもいい？',cost+'　｜　敷地 '+b.cols+'×'+b.rows,'建設する',()=>buildBuildingAt(i,b));
+}
+function buildRoadAt(i){
+if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
+if(state.coin<ROAD.coin){toast('コインが足りないよ！英語クイズに挑戦しよう');return;}
+state.coin-=ROAD.coin;state.grid[i]={id:'road'};
+toast('🛣️ 道路を敷いたよ！');
+sync();update();save(false);
+}
+function buildBuildingAt(i,b){
+if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
+if(state.selected!==b.id){toast('建築ツールを選び直してね');return;}
+if(b.id==='factory'&&state.grid.filter(x=>x&&x.id==='factory').length>=(b.maxCount||3)){toast('工場は最大3個までだよ！');return;}
+const row=Math.floor(i/SIZE),col=i%SIZE;
+if(row+b.rows>SIZE||col+b.cols>SIZE){toast('建物の'+b.cols+'×'+b.rows+'マスがマップ内に収まらないよ');return;}
+const footprint=[];
+for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++)footprint.push((row+dr)*SIZE+col+dc);
+if(footprint.some(index=>state.grid[index])){toast('その場所はもう使われているよ');return;}
+if(!hasAdjacentRoad(i,b)){toast('建物の外周に道路をつなげてね');return;}
+if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りなくなったよ');return;}
 state.wood-=b.wood;state.coin-=b.coin;state.population+=b.pop;
 const seed=Math.floor(Math.random()*2147483646)+1;
 state.grid[i]={id:b.id,seed};
@@ -605,6 +640,25 @@ footprint.slice(1).forEach(index=>{state.grid[index]={id:'occupied',anchor:i};})
 const lv=Math.floor(state.population/15)+1;
 if(lv>state.level){state.level=lv;toast('🎉 街がレベル '+lv+' にアップ！');}
 else toast(b.name+'を'+b.cols+'×'+b.rows+'マスで建てたよ！');
+sync();update();save(false);
+}
+function demolishAt(anchor){
+if(!Number.isInteger(anchor)||!state.grid[anchor]||state.grid[anchor].id==='occupied'){toast('撤去する建物が見つからないよ');return;}
+const item=state.grid[anchor];
+if(item.id==='road'){
+const refundCoin=Math.floor((ROAD.coin||0)/2),refundWood=Math.floor((ROAD.wood||0)/2);
+state.coin+=refundCoin;state.wood+=refundWood;state.grid[anchor]=null;
+toast('道路を撤去！ 木材 +'+refundWood+'、コイン +'+refundCoin+'（半額返金）');
+}else{
+const b=BUILDINGS.find(x=>x.id===item.id);
+if(!b){toast('この建物は撤去できないよ');return;}
+if(state.activeFactory===anchor)state.activeFactory=null;
+state.population=Math.max(0,state.population-b.pop);
+const refundWood=Math.floor((b.wood||0)/2),refundCoin=Math.floor((b.coin||0)/2);
+state.wood+=refundWood;state.coin+=refundCoin;
+clearBuilding(anchor);toast('建物を撤去！ 木材 +'+refundWood+'、コイン +'+refundCoin+'（半額返金）');
+}
+state.level=Math.max(1,Math.floor(state.population/15)+1);
 sync();update();save(false);
 }
 function nextQuiz(){state.answered=false;state.current=QUIZ[Math.floor(Math.random()*QUIZ.length)];document.getElementById('question').textContent=state.current[0];document.getElementById('feedback').textContent='正しい意味を選んでね！';document.getElementById('next').disabled=true;const root=document.getElementById('answers');root.innerHTML='';state.current[2].slice().sort(()=>Math.random()-.5).forEach(opt=>{const b=document.createElement('button');b.className='answer';b.textContent=opt;b.addEventListener('click',()=>answer(opt,b));root.appendChild(b)})}
@@ -616,9 +670,12 @@ document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(fa
 document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
 document.getElementById('healthCoverageToggle').addEventListener('click',()=>{healthCoverageVisible=!healthCoverageVisible;refreshHealthCoverage();update();});
 
+document.getElementById('cancelAction').addEventListener('click',closeActionConfirm);
+document.getElementById('confirmAction').addEventListener('click',runConfirmedAction);
+document.getElementById('actionConfirm').addEventListener('click',e=>{if(e.target.id==='actionConfirm')closeActionConfirm()});
 document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
 document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeActionConfirm();setMenuOpen(false);setFactoryQuizOpen(false)}});
 document.getElementById('reset').addEventListener('click',()=>{if(!confirm('街とセーブデータを最初からにする？'))return;localStorage.removeItem(KEY);state.wood=4;state.coin=3;state.population=0;state.solved=0;state.level=1;state.grid=Array(TOTAL).fill(null);state.selected=null;state.activeFactory=null;setFactoryQuizOpen(false);meshes.forEach(m=>{if(m)scene.remove(m)});meshes=Array(TOTAL).fill(null);sync();update();save(false);toast('新しい街をスタート！')});
 load();update();init3D();save(false);
 })();
