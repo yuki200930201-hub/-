@@ -16,10 +16,13 @@ const BUILDINGS=[
 {id:'water_tower',name:'貯水塔',emoji:'🗼',wood:4,coin:3,pop:0,cols:2,rows:2,waterCapacity:5},
 {id:'water_tank',name:'貯水槽',emoji:'🛢️',wood:6,coin:5,pop:0,cols:3,rows:3,waterCapacity:10},
 {id:'pumping_station',name:'ポンプ場',emoji:'🚰',wood:8,coin:7,pop:0,cols:4,rows:4,waterCapacity:20},
-{id:'solar_plant',name:'太陽光発電所',emoji:'☀️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:8},
-{id:'wind_farm',name:'風力発電所',emoji:'🌬️',wood:5,coin:5,pop:0,cols:3,rows:3,powerCapacity:12},
-{id:'gas_plant',name:'ガス火力発電所',emoji:'🏭',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:25},
-{id:'coal_plant',name:'石炭火力発電所',emoji:'🏭',wood:9,coin:9,pop:0,cols:4,rows:4,powerCapacity:40}
+{id:'wind_plant',name:'風力発電所',emoji:'🌬️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:10},
+{id:'coal_plant',name:'石炭発電所',emoji:'🏭',wood:6,coin:6,pop:0,cols:3,rows:3,powerCapacity:20},
+{id:'large_wind_plant',name:'大型風力発電所',emoji:'🌪️',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:30},
+{id:'solar_plant',name:'太陽光発電',emoji:'☀️',wood:6,coin:5,pop:0,cols:3,rows:3,powerCapacity:30},
+{id:'oil_plant',name:'石油発電所',emoji:'🛢️',wood:8,coin:8,pop:0,cols:3,rows:3,powerCapacity:35},
+{id:'nuclear_plant',name:'原子力発電所',emoji:'⚛️',wood:12,coin:12,pop:0,cols:4,rows:4,powerCapacity:200},
+{id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
@@ -60,7 +63,7 @@ setFactoryQuizOpen(true);
 }
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',solar_plant:'太陽光発電所',wind_farm:'風力発電所',gas_plant:'ガス火力発電所',coal_plant:'石炭火力発電所',bulldozer:'撤去'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去'};
 el.textContent=state.selected?'選択中：'+labels[state.selected]+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
@@ -83,9 +86,11 @@ if(!item)return null;
 const id=typeof item==='string'?item:item.id;
 if(id==='occupied')return {id:'occupied',anchor:Number(item.anchor)};
 if(id==='road')return {id:'road'};
-if(!BUILDINGS.some(b=>b.id===id))return null;
+const legacyPowerIds={'wind_farm':'wind_plant','gas_plant':'oil_plant'};
+const normalizedId=legacyPowerIds[id]||id;
+if(!BUILDINGS.some(b=>b.id===normalizedId))return null;
 const seed=item&&typeof item==='object'&&Number.isFinite(item.seed)?item.seed:Math.floor(Math.random()*2147483646)+1;
-return {id,seed};
+return {id:normalizedId,seed};
 }
 function putMigratedCell(source,row,col,roadScale){
 const item=normalizeCell(source);
@@ -269,22 +274,36 @@ box(1.48,.08,1.48,0x586b72,.12);
 for(let x=-.42;x<=.42;x+=.42){const panel=box(.34,.035,.9,0x1e5b88,.42,x,0);panel.rotation.z=-.18;for(let z=-.25;z<=.25;z+=.25)box(.35,.015,.025,0x7fc9ec,.445,x,z);}
 box(.12,.3,.12,0x8b9ba5,.25,0,0);
 }
-if(id==='wind_farm'){
-const towerMat=mat(0xe6edf2),bladeMat=mat(0xffffff);
-add(new THREE.Mesh(new THREE.CylinderGeometry(.08,.13,1.35,8),towerMat),0,.77,0);
-const hub=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),mat(0xd5e0e7));hub.position.set(0,1.48,0);g.add(hub);
-for(let n=0;n<3;n++){const blade=add(new THREE.Mesh(new THREE.BoxGeometry(.09,.75,.045),bladeMat),0,1.83,0);blade.rotation.z=n*2*Math.PI/3;}
+if(id==='wind_plant'||id==='large_wind_plant'){
+const large=id==='large_wind_plant',towerMat=mat(0xe6edf2),bladeMat=mat(0xffffff);
+add(new THREE.Mesh(new THREE.CylinderGeometry(.08,.13,large?1.8:1.35,8),towerMat),0,large?1: .77,0);
+const hub=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),mat(0xd5e0e7));hub.position.set(0,large?1.95:1.48,0);g.add(hub);
+for(let n=0;n<3;n++){const blade=add(new THREE.Mesh(new THREE.BoxGeometry(.09,large?1.12:.75,.045),bladeMat),0,large?2.42:1.83,0);blade.rotation.z=n*2*Math.PI/3;}
 box(.42,.08,.42,0x738b99,.15);
 }
-if(id==='gas_plant'){
-box(1.62,.76,1.5,0x9baab4,.48);box(1.72,.12,1.58,0x586f7d,.92);
-for(let x of [-.45,0,.45]){add(new THREE.Mesh(new THREE.CylinderGeometry(.12,.14,.45,10),mat(0x8b9da8)),x,1.22,.1);box(.18,.1,.18,0x4b687a,1.48,x,.1);}
-const stack=add(new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,.7,8),mat(0x788b97)),.52,1.27,-.35);box(.26,.08,.26,0x596c78,1.65,.52,-.35);
+if(id==='oil_plant'){
+box(1.7,.72,1.55,0x8d9ba4,.48);box(1.78,.12,1.63,0x465c69,.9);
+for(let x of [-.48,0,.48]){add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.18,.5,10),mat(0x6f8794)),x,1.15,-.15);box(.24,.12,.24,0x536875,1.42,x,-.15);}
+add(new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.62,10),mat(0x657985)),.48,1.25,.42);
+box(.65,.26,.42,0x384f5c,1.1,-.35,.42);box(.48,.08,.08,0xf0c35e,1.26,-.35,.65);
 }
 if(id==='coal_plant'){
-box(1.82,.85,1.65,0x87949c,.52);box(1.9,.13,1.73,0x505f69,.99);
-for(let x of [-.58,-.12,.38]){add(new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.85,9),mat(0x778791)),x,1.48,-.45);box(.3,.07,.3,0x4d5b65,1.93,x,-.45);}
-box(.6,.42,.5,0x6c7e88,1.28,.45,.38);box(.5,.08,.08,0xf0c35e,1.5,.45,.64);
+box(1.72,.78,1.55,0x87949c,.48);box(1.8,.13,1.63,0x505f69,.92);
+for(let x of [-.48,0,.48]){add(new THREE.Mesh(new THREE.CylinderGeometry(.13,.17,.72,9),mat(0x778791)),x,1.35,-.4);box(.28,.07,.28,0x4d5b65,1.72,x,-.4);}
+box(.55,.36,.45,0x6c7e88,1.2,.42,.38);box(.45,.08,.08,0xf0c35e,1.4,.42,.62);
+}
+if(id==='nuclear_plant'){
+box(1.82,.18,1.82,0x8798a2,.16);
+const dome=add(new THREE.Mesh(new THREE.SphereGeometry(.62,16,10,0,Math.PI*2,0,Math.PI/2),mat(0xdce6ed)),0,.28,0);dome.scale.y=.8;
+box(.78,.56,.6,0x8a9da8,.5,.55,-.38);box(.6,.08,.08,0x6a7f8b,.8,.55,-.38);
+box(.32,.18,.12,0xd94b55,.82,0,.66);box(.08,.36,.12,0xd94b55,.82,0,.66);
+}
+if(id==='fusion_plant'){
+box(1.82,.18,1.82,0x536f88,.16);
+const core=add(new THREE.Mesh(new THREE.TorusGeometry(.5,.2,12,24),mat(0x62d9ef)),0,.72,0);core.rotation.x=Math.PI/2;
+add(new THREE.Mesh(new THREE.SphereGeometry(.28,14,10),mat(0x8ff3ff)),0,.72,0);
+for(let n=0;n<3;n++){const ring=add(new THREE.Mesh(new THREE.TorusGeometry(.72,.035,8,24),mat(0x83c9f5)),0,.72,0);ring.rotation.set(n*Math.PI/3,.3,0);}
+box(.7,.5,.62,0x7894aa,.48,.55,-.4);box(.55,.08,.08,0x3d5d76,.76,.55,-.4);
 }
 if(id==='tower'){
 const floors=3+Math.floor(rand()*4),floorH=range(.38,.52),w=range(.82,1.14),d=range(.82,1.14),h=floors*floorH;
@@ -299,7 +318,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],solar_plant:[1.48,1.48],wind_farm:[.75,.75],gas_plant:[1.62,1.5],coal_plant:[1.82,1.65]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],solar_plant:[1.48,1.48],wind_plant:[.75,.75],large_wind_plant:[.75,.75],oil_plant:[1.7,1.55],coal_plant:[1.72,1.55],nuclear_plant:[1.82,1.82],fusion_plant:[1.82,1.82]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
