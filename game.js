@@ -564,12 +564,20 @@ if(state.selected==='bulldozer'){
 const anchor=resolveAnchor(i);
 if(anchor<0){toast('ここには撤去するものがないよ');return;}
 const item=state.grid[anchor];
-if(item.id==='road'){state.grid[anchor]=null;toast('道路を撤去したよ');}
+if(item.id==='road'){
+const refundCoin=Math.floor((ROAD.coin||0)/2),refundWood=Math.floor((ROAD.wood||0)/2);
+state.coin+=refundCoin;state.wood+=refundWood;state.grid[anchor]=null;
+toast('道路を撤去！ 木材 +'+refundWood、+'、コイン +'+refundCoin+'（半額返金）');
+}
 else{
 if(state.activeFactory===anchor)state.activeFactory=null;
 const b=BUILDINGS.find(x=>x.id===item.id);
-if(b)state.population=Math.max(0,state.population-b.pop);
-clearBuilding(anchor);toast('建物全体を撤去したよ');
+if(b){
+state.population=Math.max(0,state.population-b.pop);
+const refundWood=Math.floor((b.wood||0)/2),refundCoin=Math.floor((b.coin||0)/2);
+state.wood+=refundWood;state.coin+=refundCoin;
+clearBuilding(anchor);toast('建物を撤去！ 木材 +'+refundWood+'、コイン +'+refundCoin+'（半額返金）');
+}else clearBuilding(anchor);
 }
 state.level=Math.max(1,Math.floor(state.population/15)+1);
 sync();update();save(false);return;
