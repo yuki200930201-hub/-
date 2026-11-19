@@ -567,7 +567,7 @@ const item=state.grid[anchor];
 if(item.id==='road'){
 const refundCoin=Math.floor((ROAD.coin||0)/2),refundWood=Math.floor((ROAD.wood||0)/2);
 state.coin+=refundCoin;state.wood+=refundWood;state.grid[anchor]=null;
-toast('道路を撤去！ 木材 +'+refundWood、+'、コイン +'+refundCoin+'（半額返金）');
+toast('道路を撤去！ 木材 +'+refundWood+'、コイン +'+refundCoin+'（半額返金）');
 }
 else{
 if(state.activeFactory===anchor)state.activeFactory=null;
