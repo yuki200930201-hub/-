@@ -204,6 +204,9 @@ root.appendChild(grid);
 }
 }
 function groupItems(group){return group.ids.map(id=>id==='road'?ROAD:BUILDINGS.find(b=>b.id===id)).filter(Boolean)}
+const systemInfoByCategory={'警察':'policeSystemInfo','医療':'healthSystemInfo','水道':'waterSystemInfo','発電':'powerSystemInfo'};
+const visibleSystemInfo=systemInfoByCategory[renderMenu.activeCategory]||'';
+document.querySelectorAll('.system-info-item').forEach(panel=>{panel.hidden=panel.id!==visibleSystemInfo;});
 }
 function seededRandom(seed){
 let x=(Number(seed)||1)>>>0;
