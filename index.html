@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<link rel="stylesheet" href="style.css?v=square-category-cards-20261119g">
+<link rel="stylesheet" href="style.css?v=context-system-info-20261119h">
 </head>
 <body>
 <div id="world" aria-label="3Dの街マップ"></div>
@@ -35,28 +35,28 @@
     <div id="buildings" class="building-menu-content"></div>
     <div id="guide" class="sub guide">道路・建物・撤去を選んで、マップをタップしよう。</div>
   </section>
-  <section class="menu-section">
+  <section id="policeSystemInfo" class="menu-section system-info-item" hidden>
     <h2>🛡️ 治安システム</h2>
     <p class="sub">各警察施設の周囲を個別に守るよ。警察本部→警察署→交番の順に効果範囲が広くなる設定。</p>
     <div class="sub" id="policeCoverageSummary">警察の効果範囲内：0 / 1296マス</div>
     <div class="actions"><button id="coverageToggle" class="action secondary">🛡️ 効果範囲表示：ON</button></div>
     <div class="sub">🔵 警察本部：半径12マス　🟢 警察署：半径8マス　🟡 交番：半径4マス</div>
   </section>
-  <section class="menu-section">
+  <section id="healthSystemInfo" class="menu-section system-info-item" hidden>
     <h2>🏥 医療システム</h2>
     <p class="sub">診療所・病院・大学病院は、それぞれの建物を中心に個別の効果範囲を持つよ。</p>
     <div class="sub" id="healthCoverageSummary">医療施設の効果範囲内：0 / 1296マス</div>
     <div class="actions"><button id="healthCoverageToggle" class="action secondary">🩺 医療範囲表示：ON</button></div>
     <div class="sub">🟦 診療所：半径4マス　🔵 病院：半径8マス　🟣 大学病院：半径12マス</div>
   </section>
-  <section class="menu-section">
+  <section id="waterSystemInfo" class="menu-section system-info-item" hidden>
     <h2>💧 水道システム</h2>
     <p class="sub">水道管や効果範囲は使わず、施設の給水能力の合計で住宅へ水を供給するよ。能力が大きい施設ほど、より多くの住宅を給水できるよ。</p>
     <div class="sub" id="waterSupplySummary">給水済み住宅：0/0軒（給水能力：0軒）</div>
     <div class="sub">🗼 貯水塔：5軒　🛢️ 貯水槽：10軒　🚰 ポンプ場：20軒</div>
     <div class="sub">給水された住宅には青い水滴マークが付くよ。</div>
   </section>
-  <section class="menu-section">
+  <section id="powerSystemInfo" class="menu-section system-info-item" hidden>
     <h2>⚡ 電力システム</h2>
     <p class="sub">発電所ごとの供給能力で、近い住宅から優先して電力を供給するよ。</p>
     <div class="sub" id="powerSupplySummary">電力供給済み住宅：0/0軒（供給能力：0軒）</div>
@@ -98,6 +98,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=square-category-cards-20261119g"></script>
+<script src="game.js?v=context-system-info-20261119h"></script>
 </body>
 </html>
