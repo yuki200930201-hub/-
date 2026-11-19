@@ -3,24 +3,24 @@
 const SIZE=36,TOTAL=SIZE*SIZE,CELL_SPACING=.55,CELL_SIZE=.53,KEY='english-town-3d-save-v2';
 const BUILDINGS=[
 {id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2,cols:3,rows:3},
-{id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5,cols:2,rows:2},
+{id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5,serviceDemand:10,cols:2,rows:2},
 {id:'cafe',name:'カフェ',emoji:'☕',wood:3,coin:2,pop:12,cols:2,rows:3},
-{id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,cols:2,rows:2},
+{id:'tower',name:'ビル',emoji:'🏢',wood:5,coin:4,pop:25,serviceDemand:30,cols:2,rows:2},
 {id:'factory',name:'工場',emoji:'🏭',wood:0,coin:0,pop:0,cols:2,rows:2,maxCount:3},
-{id:'police_hq',name:'警察本部',emoji:'🏢',wood:8,coin:8,pop:0,cols:3,rows:3,coverage:12,coverageRank:3},
-{id:'police_station',name:'警察署',emoji:'🚔',wood:5,coin:4,pop:0,cols:2,rows:2,coverage:8,coverageRank:2},
-{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:4,coverageRank:1,coverageType:'police'},
-{id:'clinic',name:'診療所',emoji:'🩺',wood:2,coin:2,pop:0,cols:2,rows:2,coverage:4,coverageRank:1,coverageType:'health'},
-{id:'hospital',name:'病院',emoji:'🏥',wood:5,coin:5,pop:0,cols:3,rows:3,coverage:8,coverageRank:2,coverageType:'health'},
-{id:'university_hospital',name:'大学病院',emoji:'🏨',wood:8,coin:8,pop:0,cols:4,rows:4,coverage:12,coverageRank:3,coverageType:'health'},
-{id:'water_tower',name:'貯水塔',emoji:'🗼',wood:4,coin:3,pop:0,cols:2,rows:2,waterCapacity:5},
-{id:'water_tank',name:'貯水槽',emoji:'🛢️',wood:6,coin:5,pop:0,cols:3,rows:3,waterCapacity:10},
-{id:'pumping_station',name:'ポンプ場',emoji:'🚰',wood:8,coin:7,pop:0,cols:4,rows:4,waterCapacity:20},
-{id:'wind_plant',name:'風力発電所',emoji:'🌬️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:10},
-{id:'coal_plant',name:'石炭発電所',emoji:'🏭',wood:6,coin:6,pop:0,cols:3,rows:3,powerCapacity:20},
-{id:'large_wind_plant',name:'大型風力発電所',emoji:'🌪️',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:30},
-{id:'solar_plant',name:'太陽光発電',emoji:'☀️',wood:6,coin:5,pop:0,cols:3,rows:3,powerCapacity:30},
-{id:'oil_plant',name:'石油発電所',emoji:'🛢️',wood:8,coin:8,pop:0,cols:3,rows:3,powerCapacity:35},
+{id:'police_hq',name:'警察本部',emoji:'🏢',wood:8,coin:8,pop:0,cols:3,rows:3,coverage:12,coverageRank:3,coverageType:'police',policeCapacity:400},
+{id:'police_station',name:'警察署',emoji:'🚔',wood:5,coin:4,pop:0,cols:2,rows:2,coverage:8,coverageRank:2,coverageType:'police',policeCapacity:200},
+{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:4,coverageRank:1,coverageType:'police',policeCapacity:100},
+{id:'clinic',name:'診療所',emoji:'🩺',wood:2,coin:2,pop:0,cols:2,rows:2,coverage:4,coverageRank:1,coverageType:'health',healthCapacity:100},
+{id:'hospital',name:'病院',emoji:'🏥',wood:5,coin:5,pop:0,cols:3,rows:3,coverage:8,coverageRank:2,coverageType:'health',healthCapacity:200},
+{id:'university_hospital',name:'大学病院',emoji:'🏨',wood:8,coin:8,pop:0,cols:4,rows:4,coverage:12,coverageRank:3,coverageType:'health',healthCapacity:400},
+{id:'water_tower',name:'貯水塔',emoji:'🗼',wood:4,coin:3,pop:0,cols:2,rows:2,waterCapacity:100},
+{id:'water_tank',name:'貯水槽',emoji:'🛢️',wood:6,coin:5,pop:0,cols:3,rows:3,waterCapacity:200},
+{id:'pumping_station',name:'ポンプ場',emoji:'🚰',wood:8,coin:7,pop:0,cols:4,rows:4,waterCapacity:400},
+{id:'wind_plant',name:'風力発電所',emoji:'🌬️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:30},
+{id:'coal_plant',name:'石炭発電所',emoji:'🏭',wood:6,coin:6,pop:0,cols:3,rows:3,powerCapacity:50},
+{id:'large_wind_plant',name:'大型風力発電所',emoji:'🌪️',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:70},
+{id:'solar_plant',name:'太陽光発電所',emoji:'☀️',wood:6,coin:5,pop:0,cols:3,rows:3,powerCapacity:80},
+{id:'oil_plant',name:'石油発電所',emoji:'🛢️',wood:8,coin:8,pop:0,cols:3,rows:3,powerCapacity:100},
 {id:'nuclear_plant',name:'原子力発電所',emoji:'⚛️',wood:12,coin:12,pop:0,cols:4,rows:4,powerCapacity:200},
 {id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400}
 ];
@@ -91,15 +91,12 @@ el.classList.toggle('show',!!state.selected);
 }
 function update(){
 document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
-const protectedCount=calculatePoliceCoverage().filter(rank=>rank>0).length;
-const summary=document.getElementById('policeCoverageSummary');if(summary)summary.textContent='警察の効果範囲内：'+protectedCount+' / '+TOTAL+'マス';
+const police=calculatePoliceSupply();const summary=document.getElementById('policeCoverageSummary');if(summary)summary.textContent='警察：供給済み需要 '+police.servedDemand+' / '+police.totalDemand+'（供給能力 '+police.capacity+'）';
 const toggle=document.getElementById('coverageToggle');if(toggle)toggle.textContent='🛡️ 効果範囲表示：'+(policeCoverageVisible?'ON':'OFF');
-const healthCount=calculateHealthCoverage().filter(rank=>rank>0).length;
-const healthSummary=document.getElementById('healthCoverageSummary');if(healthSummary)healthSummary.textContent='医療施設の効果範囲内：'+healthCount+' / '+TOTAL+'マス';
+const health=calculateHealthSupply();const healthSummary=document.getElementById('healthCoverageSummary');if(healthSummary)healthSummary.textContent='医療：供給済み需要 '+health.servedDemand+' / '+health.totalDemand+'（供給能力 '+health.capacity+'）';
 const healthToggle=document.getElementById('healthCoverageToggle');if(healthToggle)healthToggle.textContent='🩺 医療範囲表示：'+(healthCoverageVisible?'ON':'OFF');
-const water=calculateWaterSupply();const waterSummary=document.getElementById('waterSupplySummary');if(waterSummary)waterSummary.textContent='給水済み住宅：'+water.served+'/'+water.total+'軒（給水能力：'+water.capacity+'軒）';
-const power=calculatePowerSupply();const powerSummary=document.getElementById('powerSupplySummary');if(powerSummary)powerSummary.textContent='電力供給済み住宅：'+power.served+'/'+power.total+'軒（供給能力：'+power.capacity+'軒）';
-
+const water=calculateWaterSupply();const waterSummary=document.getElementById('waterSupplySummary');if(waterSummary)waterSummary.textContent='水道：供給済み需要 '+water.servedDemand+' / '+water.totalDemand+'（供給能力 '+water.capacity+'）';
+const power=calculatePowerSupply();const powerSummary=document.getElementById('powerSupplySummary');if(powerSummary)powerSummary.textContent='電力：供給済み需要 '+power.servedDemand+' / '+power.totalDemand+'（供給能力 '+power.capacity+'）';
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -165,7 +162,7 @@ d.grid.forEach((item,i)=>{if(item&&item.id!=='occupied')putMigratedCell(item,(Ma
 function renderMenu(){
 const root=document.getElementById('buildings');root.className='building-menu-content';root.innerHTML='';
 const groups=[
-{name:'住宅・商業',emoji:'🏠',ids:['house','cafe','tower']},
+{name:'住宅',emoji:'🏠',ids:['house','tower']},
 {name:'環境',emoji:'🌳',ids:['park']},
 {name:'警察',emoji:'🚓',ids:['police_hq','police_station','koban']},
 {name:'医療',emoji:'🏥',ids:['clinic','hospital','university_hospital']},
@@ -183,7 +180,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-const detail=b.waterCapacity?'<small>給水 +'+b.waterCapacity+'</small>':(b.powerCapacity?'<small>発電 +'+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>');
+const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>'))));
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
@@ -438,28 +435,38 @@ if(Math.hypot(r-centerRow,c-centerCol)<=facility.coverage){const index=r*SIZE+c;
 });
 return ranks;
 }
-function calculateWaterSupply(){
-const facilities=[],houses=[];
+function calculateDemandSupply(capacityKey,coverageType){
+const facilities=[],homes=[];
 state.grid.forEach((item,anchor)=>{
 if(!item||item.id==='occupied')return;
 const building=BUILDINGS.find(b=>b.id===item.id);if(!building)return;
-const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
-if(building.waterCapacity)facilities.push({row:row+(building.rows-1)/2,col:col+(building.cols-1)/2,capacity:building.waterCapacity});
-if(item.id==='house')houses.push({anchor,row:row+(building.rows-1)/2,col:col+(building.cols-1)/2});
+const row=Math.floor(anchor/SIZE),col=anchor%SIZE,centerRow=row+(building.rows-1)/2,centerCol=col+(building.cols-1)/2;
+if(building[capacityKey])facilities.push({row:centerRow,col:centerCol,capacity:building[capacityKey],coverage:building.coverage||null,coverageType:building.coverageType||null,remaining:building[capacityKey]});
+if(building.serviceDemand)homes.push({anchor,row:centerRow,col:centerCol,demand:building.serviceDemand});
 });
 const capacity=facilities.reduce((sum,facility)=>sum+facility.capacity,0);
-const ordered=houses.map(house=>({anchor:house.anchor,distance:facilities.length?Math.min(...facilities.map(f=>Math.hypot(house.row-f.row,house.col-f.col))):Infinity}));
-ordered.sort((a,b)=>a.distance-b.distance||a.anchor-b.anchor);
-const servedAnchors=new Set(ordered.slice(0,capacity).map(entry=>entry.anchor));
-return {served:servedAnchors.size,total:houses.length,capacity,servedAnchors};
+const totalDemand=homes.reduce((sum,home)=>sum+home.demand,0);
+const orderedHomes=homes.map(home=>{
+const candidates=facilities.map((facility,index)=>({index,distance:Math.hypot(home.row-facility.row,home.col-facility.col),facility}))
+.filter(candidate=>!coverageType||(candidate.facility.coverageType===coverageType&&candidate.distance<=candidate.facility.coverage))
+.sort((a,b)=>a.distance-b.distance||a.index-b.index);
+return {...home,candidates,nearestDistance:candidates.length?candidates[0].distance:Infinity};
+}).sort((a,b)=>a.nearestDistance-b.nearestDistance||a.anchor-b.anchor);
+const servedAnchors=new Set();let servedDemand=0;
+orderedHomes.forEach(home=>{
+for(const candidate of home.candidates){
+const facility=facilities[candidate.index];
+if(facility.remaining>=home.demand){
+facility.remaining-=home.demand;servedAnchors.add(home.anchor);servedDemand+=home.demand;break;
 }
-function calculatePowerSupply(){
-const facilities=[],houses=[];
-state.grid.forEach((item,anchor)=>{if(!item||item.id==='occupied')return;const b=BUILDINGS.find(x=>x.id===item.id);if(!b)return;const row=Math.floor(anchor/SIZE),col=anchor%SIZE;if(b.powerCapacity)facilities.push({row:row+(b.rows-1)/2,col:col+(b.cols-1)/2,capacity:b.powerCapacity});if(item.id==='house')houses.push({anchor,row:row+(b.rows-1)/2,col:col+(b.cols-1)/2});});
-const capacity=facilities.reduce((sum,f)=>sum+f.capacity,0);
-const sorted=houses.map(h=>({anchor:h.anchor,distance:facilities.length?Math.min(...facilities.map(f=>Math.hypot(h.row-f.row,h.col-f.col))):Infinity})).sort((a,b)=>a.distance-b.distance||a.anchor-b.anchor);
-const servedAnchors=new Set(sorted.slice(0,capacity).map(h=>h.anchor));return {served:servedAnchors.size,total:houses.length,capacity,servedAnchors};
 }
+});
+return {servedDemand,totalDemand,capacity,servedAnchors,servedHomes:servedAnchors.size,totalHomes:homes.length};
+}
+function calculateWaterSupply(){return calculateDemandSupply('waterCapacity',null)}
+function calculatePowerSupply(){return calculateDemandSupply('powerCapacity',null)}
+function calculatePoliceSupply(){return calculateDemandSupply('policeCapacity','police')}
+function calculateHealthSupply(){return calculateDemandSupply('healthCapacity','health')}
 function refreshPowerIndicators(){
 if(!scene)return;if(powerIndicatorsGroup){scene.remove(powerIndicatorsGroup);powerIndicatorsGroup=null;}const supply=calculatePowerSupply();powerIndicatorsGroup=new THREE.Group();const mat=new THREE.MeshBasicMaterial({color:0xffd447});const sphere=new THREE.SphereGeometry(.075,10,8),cone=new THREE.ConeGeometry(.07,.14,8);supply.servedAnchors.forEach(anchor=>{const tile=tiles[anchor];if(!tile)return;const marker=new THREE.Group();const top=new THREE.Mesh(cone,mat);top.position.y=.1;marker.add(top);const dot=new THREE.Mesh(sphere,mat);dot.position.y=.02;marker.add(dot);marker.position.set(tile.position.x+.18,1.85,tile.position.z+.18);powerIndicatorsGroup.add(marker);});scene.add(powerIndicatorsGroup);
 }
