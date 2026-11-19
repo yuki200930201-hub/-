@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<link rel="stylesheet" href="style.css?v=build-demolish-confirm-20261119j">
+<link rel="stylesheet" href="style.css?v=demand-based-public-services-20261119k">
 </head>
 <body>
 <div id="world" aria-label="3Dの街マップ"></div>
@@ -37,31 +37,33 @@
   </section>
   <section id="policeSystemInfo" class="menu-section system-info-item" hidden>
     <h2>🛡️ 治安システム</h2>
-    <p class="sub">各警察施設の周囲を個別に守るよ。警察本部→警察署→交番の順に効果範囲が広くなる設定。</p>
-    <div class="sub" id="policeCoverageSummary">警察の効果範囲内：0 / 1296マス</div>
+    <p class="sub">家・ビルの需要を、効果範囲内で近い警察施設から順に供給するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="policeCoverageSummary">警察：供給済み需要 0 / 0（供給能力 0）</div>
     <div class="actions"><button id="coverageToggle" class="action secondary">🛡️ 効果範囲表示：ON</button></div>
-    <div class="sub">🔵 警察本部：半径12マス　🟢 警察署：半径8マス　🟡 交番：半径4マス</div>
+    <div class="sub">供給：交番100　警察署200　警察本部400</div>
+    <div class="sub">効果範囲：警察本部12マス　警察署8マス　交番4マス</div>
   </section>
   <section id="healthSystemInfo" class="menu-section system-info-item" hidden>
     <h2>🏥 医療システム</h2>
-    <p class="sub">診療所・病院・大学病院は、それぞれの建物を中心に個別の効果範囲を持つよ。</p>
-    <div class="sub" id="healthCoverageSummary">医療施設の効果範囲内：0 / 1296マス</div>
+    <p class="sub">家・ビルの需要を、効果範囲内で近い医療施設から順に供給するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="healthCoverageSummary">医療：供給済み需要 0 / 0（供給能力 0）</div>
     <div class="actions"><button id="healthCoverageToggle" class="action secondary">🩺 医療範囲表示：ON</button></div>
-    <div class="sub">🟦 診療所：半径4マス　🔵 病院：半径8マス　🟣 大学病院：半径12マス</div>
+    <div class="sub">供給：診療所100　病院200　大学病院400</div>
+    <div class="sub">効果範囲：診療所4マス　病院8マス　大学病院12マス</div>
   </section>
   <section id="waterSystemInfo" class="menu-section system-info-item" hidden>
     <h2>💧 水道システム</h2>
-    <p class="sub">水道管や効果範囲は使わず、施設の給水能力の合計で住宅へ水を供給するよ。能力が大きい施設ほど、より多くの住宅を給水できるよ。</p>
-    <div class="sub" id="waterSupplySummary">給水済み住宅：0/0軒（給水能力：0軒）</div>
-    <div class="sub">🗼 貯水塔：5軒　🛢️ 貯水槽：10軒　🚰 ポンプ場：20軒</div>
+    <p class="sub">家・ビルの需要を、近い水道施設から順に供給するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="waterSupplySummary">水道：供給済み需要 0 / 0（供給能力 0）</div>
+    <div class="sub">供給：貯水塔100　貯水槽200　ポンプ場400</div>
     <div class="sub">給水された住宅には青い水滴マークが付くよ。</div>
   </section>
   <section id="powerSystemInfo" class="menu-section system-info-item" hidden>
     <h2>⚡ 電力システム</h2>
-    <p class="sub">発電所ごとの供給能力で、近い住宅から優先して電力を供給するよ。</p>
-    <div class="sub" id="powerSupplySummary">電力供給済み住宅：0/0軒（供給能力：0軒）</div>
-    <div class="sub">🌬️ 風力：10軒　🏭 石炭：20軒　🌪️ 大型風力：30軒　☀️ 太陽光：30軒</div>
-    <div class="sub">🛢️ 石油：35軒　⚛️ 原子力：200軒　✨ 核融合：400軒</div>
+    <p class="sub">家・ビルの需要を、近い発電所から順に供給するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="powerSupplySummary">電力：供給済み需要 0 / 0（供給能力 0）</div>
+    <div class="sub">供給：風力30　石炭50　大型風力70　太陽光80</div>
+    <div class="sub">石油100　原子力200　核融合400</div>
     <div class="sub">電力が供給された住宅には黄色いマークが付くよ。</div>
   </section>
   <section class="menu-section">
@@ -111,6 +113,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=build-demolish-confirm-20261119j"></script>
+<script src="game.js?v=demand-based-public-services-20261119k"></script>
 </body>
 </html>
