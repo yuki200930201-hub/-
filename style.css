@@ -108,3 +108,19 @@ button.secondary{background:#e9eff4;color:#536273}
 .category-buildings .build strong{display:block;width:100%;font-size:11px;line-height:1.25;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
 .category-buildings .build small{display:block;width:100%;font-size:9px;line-height:1.25;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
 @media(max-width:700px){#gameMenu{width:min(430px,calc(100vw - 18px))}}
+
+/* カテゴリ選択画面とカテゴリ別の建築画面 */
+.category-view-heading{margin:2px 2px 10px;color:#64788a;font-size:12px;font-weight:700}
+.category-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.category-picker-item{min-width:0;min-height:88px;padding:10px 5px;border:1px solid #dce8ef;border-radius:14px;background:linear-gradient(150deg,#fafdff,#edf6fc);color:#34516a;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+.category-picker-item:active{transform:scale(.98);background:#e5f3fc}
+.category-picker-icon{font-size:27px;line-height:1.2}
+.category-picker-item strong{font-size:11px;line-height:1.2;text-align:center;white-space:normal;word-break:keep-all}
+.category-picker-item small{font-size:9px;color:#8092a2}
+.category-detail-top{display:flex;align-items:center;gap:9px;margin:1px 0 8px}
+.category-back{flex:0 0 auto;border:0;border-radius:10px;background:#eaf1f6;color:#486176;padding:7px 9px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.category-detail-heading{display:flex;align-items:center;gap:5px;min-width:0;color:#31516b}
+.category-detail-heading>span{font-size:21px}
+.category-detail-heading strong{font-size:14px}
+.category-detail-heading small{font-size:10px;color:#8293a2}
+.category-detail-top+.buildings{margin-top:6px}
