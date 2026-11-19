@@ -142,3 +142,7 @@ button.secondary{background:#e9eff4;color:#536273}
  .category-buildings .build strong{font-size:11px}
  .category-buildings .build small{font-size:9px}
 }
+
+/* システムの説明は対応カテゴリを選んだときだけ表示 */
+.system-info-item[hidden]{display:none!important}
+.system-info-item{margin-top:0;padding-top:12px;border-top:1px solid #e8eef1}
