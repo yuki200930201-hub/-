@@ -141,7 +141,7 @@ d.grid.forEach((item,i)=>{if(item&&item.id!=='occupied')putMigratedCell(item,(Ma
 }catch(e){}
 }
 function renderMenu(){
-const root=document.getElementById('buildings');root.innerHTML='';
+const root=document.getElementById('buildings');root.className='building-menu-content';root.innerHTML='';
 const groups=[
 {name:'住宅・商業',emoji:'🏠',ids:['house','cafe','tower']},
 {name:'環境',emoji:'🌳',ids:['park']},
@@ -161,8 +161,8 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-const detail=b.waterCapacity?'<small>給水能力 +'+b.waterCapacity+'軒</small>':(b.powerCapacity?'<small>発電能力 +'+b.powerCapacity+'軒</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small>');
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'マス</small>':'')+(b.id==='road'?'<small>道路 1×1マス</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
+const detail=b.waterCapacity?'<small>給水 +'+b.waterCapacity+'</small>':(b.powerCapacity?'<small>発電 +'+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>');
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
