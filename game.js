@@ -9,7 +9,10 @@ const BUILDINGS=[
 {id:'factory',name:'工場',emoji:'🏭',wood:0,coin:0,pop:0,cols:2,rows:2,maxCount:3},
 {id:'police_hq',name:'警察本部',emoji:'🏢',wood:8,coin:8,pop:0,cols:3,rows:3,coverage:12,coverageRank:3},
 {id:'police_station',name:'警察署',emoji:'🚔',wood:5,coin:4,pop:0,cols:2,rows:2,coverage:8,coverageRank:2},
-{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:4,coverageRank:1}
+{id:'koban',name:'交番',emoji:'🚨',wood:2,coin:2,pop:0,cols:1,rows:1,coverage:4,coverageRank:1,coverageType:'police'},
+{id:'clinic',name:'診療所',emoji:'🩺',wood:2,coin:2,pop:0,cols:2,rows:2,coverage:4,coverageRank:1,coverageType:'health'},
+{id:'hospital',name:'病院',emoji:'🏥',wood:5,coin:5,pop:0,cols:3,rows:3,coverage:8,coverageRank:2,coverageType:'health'},
+{id:'university_hospital',name:'大学病院',emoji:'🏨',wood:8,coin:8,pop:0,cols:4,rows:4,coverage:12,coverageRank:3,coverageType:'health'}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
@@ -24,6 +27,7 @@ const QUIZ=[
 let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,current:null,answered:false,activeFactory:null};
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
+let healthCoverageVisible=true,healthCoverageGroup=null,healthCoverageRanks=Array(TOTAL).fill(0);
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
@@ -57,6 +61,9 @@ document.getElementById('wood').textContent=state.wood;document.getElementById('
 const protectedCount=calculatePoliceCoverage().filter(rank=>rank>0).length;
 const summary=document.getElementById('policeCoverageSummary');if(summary)summary.textContent='警察の効果範囲内：'+protectedCount+' / '+TOTAL+'マス';
 const toggle=document.getElementById('coverageToggle');if(toggle)toggle.textContent='🛡️ 効果範囲表示：'+(policeCoverageVisible?'ON':'OFF');
+const healthCount=calculateHealthCoverage().filter(rank=>rank>0).length;
+const healthSummary=document.getElementById('healthCoverageSummary');if(healthSummary)healthSummary.textContent='医療施設の効果範囲内：'+healthCount+' / '+TOTAL+'マス';
+const healthToggle=document.getElementById('healthCoverageToggle');if(healthToggle)healthToggle.textContent='🩺 医療範囲表示：'+(healthCoverageVisible?'ON':'OFF');
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -126,7 +133,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>🛡️ 半径 '+b.coverage+'マス</small>':'')+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'マス</small>':'')+(b.id==='road'?'<small>道路 1×1マス</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small><small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
@@ -210,6 +217,15 @@ const w=1.02,d=1.02,h=.78;box(w,h,d,0xe5edf2,.08+h/2);box(w+.07,.11,d+.07,0x315b
 if(id==='koban'){
 const w=.46,d=.46,h=.62;box(w,h,d,0xf1f4f6,.08+h/2);box(w+.04,.09,d+.04,0x315b83,.08+h+.045);box(w*.72,.18,.035,0x74c7e6,.08+h*.55,0,d/2+.02);box(w*.2,.28,.04,0x315b83,.08+.14,0,d/2+.03);box(w*.84,.05,d*.8,0xffffff,.08+h+.12);
 }
+if(id==='clinic'){
+const w=.9,d=.9,h=.66;box(w,h,d,0xf2f6f7,.08+h/2);box(w+.07,.10,d+.07,0x5cabbc,.08+h+.05);box(w*.68,.25,.04,0x8ed8e6,.08+h*.58,0,d/2+.025);box(w*.18,.32,.05,0x5cabbc,.08+.16,0,d/2+.04);box(.32,.09,.035,0xd94b55,.08+h+.12,0,d/2+.06);box(.09,.32,.035,0xd94b55,.08+h+.12,0,d/2+.06);
+}
+if(id==='hospital'){
+const w=1.42,d=1.42,h=.9;box(w,h,d,0xf0f4f7,.08+h/2);box(w+.09,.12,d+.09,0x477eaa,.08+h+.06);box(w*.72,.3,.045,0x83c8e7,.08+h*.58,0,d/2+.025);box(w*.19,.38,.055,0x477eaa,.08+.19,0,d/2+.04);box(.42,.1,.04,0xd94b55,.08+h+.15,0,d/2+.065);box(.1,.35,.04,0xd94b55,.08+h+.15,0,d/2+.065);box(w*.7,.08,d*.72,0xffffff,.08+h+.15);
+}
+if(id==='university_hospital'){
+const w=1.86,d=1.86,h=1.12;box(w,h,d,0xeaf0f5,.08+h/2);box(w*.42,.48,d*.92,0xdfe8ef,.08+h+.22,-w*.29,0);box(w*.42,.48,d*.92,0xdfe8ef,.08+h+.22,w*.29,0);box(w+.1,.13,d+.1,0x365f8d,.08+h+.06);box(w*.58,.34,.05,0x83c8e7,.08+h*.62,0,d/2+.03);box(w*.16,.42,.055,0x477eaa,.08+.21,0,d/2+.04);box(.5,.11,.04,0xd94b55,.08+h+.22,0,d/2+.065);box(.11,.4,.04,0xd94b55,.08+h+.22,0,d/2+.065);box(w*.82,.08,d*.78,0xffffff,.08+h+.15);
+}
 if(id==='tower'){
 const floors=3+Math.floor(rand()*4),floorH=range(.38,.52),w=range(.82,1.14),d=range(.82,1.14),h=floors*floorH;
 const facade=pick([0x5ab7dc,0x7394c8,0x7ab9aa,0x9d9cc9,0x8aa6bd,0x7cabbc]),glass=pick([0xe4f8ff,0xbce9f2,0xffe8a8]);
@@ -223,7 +239,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
@@ -251,7 +267,7 @@ function calculatePoliceCoverage(){
 const ranks=Array(TOTAL).fill(0);
 state.grid.forEach((item,anchor)=>{
 if(!item||item.id==='occupied')return;
-const police=BUILDINGS.find(b=>b.id===item.id&&b.coverage);
+const police=BUILDINGS.find(b=>b.id===item.id&&b.coverage&&b.coverageType==='police');
 if(!police)return;
 const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
 const centerRow=row+(police.rows-1)/2,centerCol=col+(police.cols-1)/2;
@@ -259,6 +275,23 @@ const reach=Math.ceil(police.coverage);
 for(let r=Math.max(0,Math.floor(centerRow-reach));r<=Math.min(SIZE-1,Math.ceil(centerRow+reach));r++){
 for(let c=Math.max(0,Math.floor(centerCol-reach));c<=Math.min(SIZE-1,Math.ceil(centerCol+reach));c++){
 if(Math.hypot(r-centerRow,c-centerCol)<=police.coverage){const index=r*SIZE+c;ranks[index]=Math.max(ranks[index],police.coverageRank);}
+}
+}
+});
+return ranks;
+}
+function calculateHealthCoverage(){
+const ranks=Array(TOTAL).fill(0);
+state.grid.forEach((item,anchor)=>{
+if(!item||item.id==='occupied')return;
+const facility=BUILDINGS.find(b=>b.id===item.id&&b.coverage&&b.coverageType==='health');
+if(!facility)return;
+const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
+const centerRow=row+(facility.rows-1)/2,centerCol=col+(facility.cols-1)/2;
+const reach=Math.ceil(facility.coverage);
+for(let r=Math.max(0,Math.floor(centerRow-reach));r<=Math.min(SIZE-1,Math.ceil(centerRow+reach));r++){
+for(let c=Math.max(0,Math.floor(centerCol-reach));c<=Math.min(SIZE-1,Math.ceil(centerCol+reach));c++){
+if(Math.hypot(r-centerRow,c-centerCol)<=facility.coverage){const index=r*SIZE+c;ranks[index]=Math.max(ranks[index],facility.coverageRank);}
 }
 }
 });
@@ -283,6 +316,25 @@ overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.073,tile.pos
 });
 scene.add(policeCoverageGroup);
 }
+function refreshHealthCoverage(){
+if(!scene||!tiles.length)return;
+if(healthCoverageGroup){scene.remove(healthCoverageGroup);healthCoverageGroup=null;}
+healthCoverageRanks=calculateHealthCoverage();
+if(!healthCoverageVisible)return;
+healthCoverageGroup=new THREE.Group();
+const materials={
+1:new THREE.MeshBasicMaterial({color:0x55c4d2,transparent:true,opacity:.30,depthWrite:false}),
+2:new THREE.MeshBasicMaterial({color:0x4c91d8,transparent:true,opacity:.30,depthWrite:false}),
+3:new THREE.MeshBasicMaterial({color:0x9876d4,transparent:true,opacity:.32,depthWrite:false})
+};
+const planeGeometry=new THREE.PlaneGeometry(CELL_SIZE*.96,CELL_SIZE*.96);
+healthCoverageRanks.forEach((rank,i)=>{
+if(!rank)return;
+const tile=tiles[i],overlay=new THREE.Mesh(planeGeometry,materials[rank]);
+overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.078,tile.position.z);overlay.renderOrder=3;healthCoverageGroup.add(overlay);
+});
+scene.add(healthCoverageGroup);
+}
 function sync(){
 for(let i=0;i<TOTAL;i++){
 const item=state.grid[i];
@@ -303,6 +355,7 @@ if(id==='road')m.scale.set(1,1,1);else m.scale.set(.02,.02,.02);
 scene.add(m);meshes[i]=m;
 });
 refreshPoliceCoverage();
+refreshHealthCoverage();
 }
 function init3D(){
 const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
@@ -388,6 +441,7 @@ document.getElementById('next').addEventListener('click',nextQuiz);document.getE
 document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!document.getElementById('gameMenu').classList.contains('open')));
 document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
 document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
+document.getElementById('healthCoverageToggle').addEventListener('click',()=>{healthCoverageVisible=!healthCoverageVisible;refreshHealthCoverage();update();});
 document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
 document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
