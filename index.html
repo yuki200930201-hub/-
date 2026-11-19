@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<link rel="stylesheet" href="style.css?v=water-capacity-20261119a">
+<link rel="stylesheet" href="style.css?v=power-pollution-20261119a">
 </head>
 <body>
 <div id="world" aria-label="3Dの街マップ"></div>
@@ -57,6 +57,16 @@
     <div class="sub">給水された住宅には青い水滴マークが付くよ。</div>
   </section>
   <section class="menu-section">
+    <h2>⚡ 電力システム</h2>
+    <p class="sub">発電所の能力に応じて近い住宅から電力を供給。発電方法によって公害範囲が異なるよ。</p>
+    <div class="sub" id="powerSupplySummary">電力供給済み住宅：0/0軒（供給能力：0軒）</div>
+    <div class="sub">☀️ 太陽光：8軒・公害なし　🌬️ 風力：12軒・公害なし</div>
+    <div class="sub">🏭 ガス火力：25軒・公害半径5マス　🏭 石炭火力：40軒・公害半径9マス</div>
+    <div class="sub" id="pollutionSummary">公害の影響範囲：0マス</div>
+    <div class="actions"><button id="pollutionToggle" class="action secondary">🏭 公害範囲表示：ON</button></div>
+    <div class="sub">🟠 ガス火力の公害　🔴 石炭火力の公害（重なる範囲は強い方で表示）</div>
+  </section>
+  <section class="menu-section">
     <h2>💾 データ管理</h2>
     <div class="actions">
       <button id="save" class="action secondary">💾 セーブ</button>
@@ -90,6 +100,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=water-capacity-20261119a"></script>
+<script src="game.js?v=power-pollution-20261119a"></script>
 </body>
 </html>
