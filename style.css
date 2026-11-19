@@ -87,3 +87,6 @@ button.secondary{background:#e9eff4;color:#536273}
 
 /* 警察施設の効果範囲表示 */
 #policeCoverageSummary{margin:7px 0;font-weight:800;color:#45627c}
+
+/* 医療施設の効果範囲表示 */
+#healthCoverageSummary{margin:7px 0;font-weight:800;color:#45627c}
