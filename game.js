@@ -142,7 +142,18 @@ d.grid.forEach((item,i)=>{if(item&&item.id!=='occupied')putMigratedCell(item,(Ma
 }
 function renderMenu(){
 const root=document.getElementById('buildings');root.innerHTML='';
-[...BUILDINGS,ROAD].forEach(b=>{
+const groups=[
+{name:'住宅・商業',emoji:'🏠',ids:['house','cafe','tower']},
+{name:'環境',emoji:'🌳',ids:['park']},
+{name:'警察',emoji:'🚓',ids:['police_hq','police_station','koban']},
+{name:'医療',emoji:'🏥',ids:['clinic','hospital','university_hospital']},
+{name:'水道',emoji:'💧',ids:['water_tower','water_tank','pumping_station']},
+{name:'発電',emoji:'⚡',ids:['wind_plant','coal_plant','large_wind_plant','solar_plant','oil_plant','nuclear_plant','fusion_plant']},
+{name:'産業',emoji:'🏭',ids:['factory']},
+{name:'道路',emoji:'🛣️',ids:['road']}
+];
+const expandedGroups=renderMenu.expanded||(renderMenu.expanded={'住宅・商業':true});
+function makeBuildButton(b){
 const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
 const atLimit=b.id==='factory'&&factoryCount>=(b.maxCount||3);
 const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
@@ -156,17 +167,32 @@ state.selected=state.selected===b.id?null:b.id;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
 renderMenu();updateToolStatus();setMenuOpen(false);
 });
-root.appendChild(btn);
+return btn;
+}
+groups.forEach(group=>{
+const wrap=document.createElement('div');wrap.className='building-category';
+const header=document.createElement('button');header.className='building-category-header';header.type='button';
+header.innerHTML='<span>'+group.emoji+' '+group.name+' <small>('+group.ids.length+')</small></span><span class="category-arrow">'+(expandedGroups[group.name]?'▼':'▶')+'</span>';
+header.setAttribute('aria-expanded',String(!!expandedGroups[group.name]));
+header.addEventListener('click',()=>{expandedGroups[group.name]=!expandedGroups[group.name];renderMenu();});
+wrap.appendChild(header);
+if(expandedGroups[group.name]){
+const grid=document.createElement('div');grid.className='buildings category-buildings';
+group.ids.forEach(id=>{const b=id==='road'?ROAD:BUILDINGS.find(x=>x.id===id);if(b)grid.appendChild(makeBuildButton(b));});
+wrap.appendChild(grid);
+}
+root.appendChild(wrap);
 });
-const erase=document.createElement('button');
-erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
+const tools=document.createElement('div');tools.className='building-category tool-category';
+const toolHeading=document.createElement('div');toolHeading.className='building-category-label';toolHeading.textContent='🧰 ツール';tools.appendChild(toolHeading);
+const erase=document.createElement('button');erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
 erase.innerHTML='<span class="emoji">🚜</span><strong>撤去</strong><small>費用なし</small><small>道路・建物を撤去</small>';
 erase.addEventListener('click',()=>{
 state.selected=state.selected==='bulldozer'?null:'bulldozer';
 document.getElementById('guide').textContent=state.selected?'撤去ツール：マスをタップして道路や建物を取り除こう。':'ツールを選んでマップをタップしよう。';
 renderMenu();updateToolStatus();setMenuOpen(false);
 });
-root.appendChild(erase);
+tools.appendChild(erase);root.appendChild(tools);
 }
 function seededRandom(seed){
 let x=(Number(seed)||1)>>>0;
