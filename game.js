@@ -15,7 +15,11 @@ const BUILDINGS=[
 {id:'university_hospital',name:'大学病院',emoji:'🏨',wood:8,coin:8,pop:0,cols:4,rows:4,coverage:12,coverageRank:3,coverageType:'health'},
 {id:'water_tower',name:'貯水塔',emoji:'🗼',wood:4,coin:3,pop:0,cols:2,rows:2,waterCapacity:5},
 {id:'water_tank',name:'貯水槽',emoji:'🛢️',wood:6,coin:5,pop:0,cols:3,rows:3,waterCapacity:10},
-{id:'pumping_station',name:'ポンプ場',emoji:'🚰',wood:8,coin:7,pop:0,cols:4,rows:4,waterCapacity:20}
+{id:'pumping_station',name:'ポンプ場',emoji:'🚰',wood:8,coin:7,pop:0,cols:4,rows:4,waterCapacity:20},
+{id:'solar_plant',name:'太陽光発電所',emoji:'☀️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:8},
+{id:'wind_farm',name:'風力発電所',emoji:'🌬️',wood:5,coin:5,pop:0,cols:3,rows:3,powerCapacity:12},
+{id:'gas_plant',name:'ガス火力発電所',emoji:'🏭',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:25,pollutionRadius:5,pollutionRank:1},
+{id:'coal_plant',name:'石炭火力発電所',emoji:'🏭',wood:9,coin:9,pop:0,cols:4,rows:4,powerCapacity:40,pollutionRadius:9,pollutionRank:2}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
@@ -31,7 +35,7 @@ let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),leve
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
 let healthCoverageVisible=true,healthCoverageGroup=null,healthCoverageRanks=Array(TOTAL).fill(0);
-let waterIndicatorsGroup=null;
+let waterIndicatorsGroup=null,powerIndicatorsGroup=null,pollutionGroup=null,pollutionVisible=true;
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
@@ -56,7 +60,7 @@ setFactoryQuizOpen(true);
 }
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',bulldozer:'撤去'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',solar_plant:'太陽光発電所',wind_farm:'風力発電所',gas_plant:'ガス火力発電所',coal_plant:'石炭火力発電所',bulldozer:'撤去'};
 el.textContent=state.selected?'選択中：'+labels[state.selected]+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
@@ -69,6 +73,8 @@ const healthCount=calculateHealthCoverage().filter(rank=>rank>0).length;
 const healthSummary=document.getElementById('healthCoverageSummary');if(healthSummary)healthSummary.textContent='医療施設の効果範囲内：'+healthCount+' / '+TOTAL+'マス';
 const healthToggle=document.getElementById('healthCoverageToggle');if(healthToggle)healthToggle.textContent='🩺 医療範囲表示：'+(healthCoverageVisible?'ON':'OFF');
 const water=calculateWaterSupply();const waterSummary=document.getElementById('waterSupplySummary');if(waterSummary)waterSummary.textContent='給水済み住宅：'+water.served+'/'+water.total+'軒（給水能力：'+water.capacity+'軒）';
+const power=calculatePowerSupply();const powerSummary=document.getElementById('powerSupplySummary');if(powerSummary)powerSummary.textContent='電力供給済み住宅：'+power.served+'/'+power.total+'軒（供給能力：'+power.capacity+'軒）';
+const pollutionCount=calculatePollutionCoverage().filter(rank=>rank>0).length;const pollutionSummary=document.getElementById('pollutionSummary');if(pollutionSummary)pollutionSummary.textContent='公害の影響範囲：'+pollutionCount+'マス';const pollutionToggle=document.getElementById('pollutionToggle');if(pollutionToggle)pollutionToggle.textContent='🏭 公害範囲表示：'+(pollutionVisible?'ON':'OFF');
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -138,7 +144,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-const detail=b.waterCapacity?'<small>給水能力 +'+b.waterCapacity+'軒</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small>';
+const detail=b.waterCapacity?'<small>給水能力 +'+b.waterCapacity+'軒</small>':(b.powerCapacity?'<small>発電能力 +'+b.powerCapacity+'軒</small>':'<small>'+(b.id==='factory'?'設置数 '+factoryCount+'/'+b.maxCount+'個':'人口 +'+b.pop)+'</small>');
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'マス</small>':'')+(b.id==='road'?'<small>道路 1×1マス</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'マス</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;
@@ -258,6 +264,28 @@ add(new THREE.Mesh(new THREE.TorusGeometry(.17,.035,7,14),trim),x,1.39,.05);
 box(.52,.25,.08,0x55b8df,.48,0,.81);
 box(.18,.18,.08,0xf3d46b,.5,0,.87);
 }
+if(id==='solar_plant'){
+box(1.48,.08,1.48,0x586b72,.12);
+for(let x=-.42;x<=.42;x+=.42){const panel=box(.34,.035,.9,0x1e5b88,.42,x,0);panel.rotation.z=-.18;for(let z=-.25;z<=.25;z+=.25)box(.35,.015,.025,0x7fc9ec,.445,x,z);}
+box(.12,.3,.12,0x8b9ba5,.25,0,0);
+}
+if(id==='wind_farm'){
+const towerMat=mat(0xe6edf2),bladeMat=mat(0xffffff);
+add(new THREE.Mesh(new THREE.CylinderGeometry(.08,.13,1.35,8),towerMat),0,.77,0);
+const hub=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),mat(0xd5e0e7));hub.position.set(0,1.48,0);g.add(hub);
+for(let n=0;n<3;n++){const blade=add(new THREE.Mesh(new THREE.BoxGeometry(.09,.75,.045),bladeMat),0,1.83,0);blade.rotation.z=n*2*Math.PI/3;}
+box(.42,.08,.42,0x738b99,.15);
+}
+if(id==='gas_plant'){
+box(1.62,.76,1.5,0x9baab4,.48);box(1.72,.12,1.58,0x586f7d,.92);
+for(let x of [-.45,0,.45]){add(new THREE.Mesh(new THREE.CylinderGeometry(.12,.14,.45,10),mat(0x8b9da8)),x,1.22,.1);box(.18,.1,.18,0x4b687a,1.48,x,.1);}
+const stack=add(new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,.7,8),mat(0x788b97)),.52,1.27,-.35);box(.26,.08,.26,0x596c78,1.65,.52,-.35);
+}
+if(id==='coal_plant'){
+box(1.82,.85,1.65,0x87949c,.52);box(1.9,.13,1.73,0x505f69,.99);
+for(let x of [-.58,-.12,.38]){add(new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.85,9),mat(0x778791)),x,1.48,-.45);box(.3,.07,.3,0x4d5b65,1.93,x,-.45);}
+box(.6,.42,.5,0x6c7e88,1.28,.45,.38);box(.5,.08,.08,0xf0c35e,1.5,.45,.64);
+}
 if(id==='tower'){
 const floors=3+Math.floor(rand()*4),floorH=range(.38,.52),w=range(.82,1.14),d=range(.82,1.14),h=floors*floorH;
 const facade=pick([0x5ab7dc,0x7394c8,0x7ab9aa,0x9d9cc9,0x8aa6bd,0x7cabbc]),glass=pick([0xe4f8ff,0xbce9f2,0xffe8a8]);
@@ -271,7 +299,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],solar_plant:[1.48,1.48],wind_farm:[.75,.75],gas_plant:[1.62,1.5],coal_plant:[1.82,1.65]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
@@ -343,6 +371,23 @@ const ordered=houses.map(house=>({anchor:house.anchor,distance:facilities.length
 ordered.sort((a,b)=>a.distance-b.distance||a.anchor-b.anchor);
 const servedAnchors=new Set(ordered.slice(0,capacity).map(entry=>entry.anchor));
 return {served:servedAnchors.size,total:houses.length,capacity,servedAnchors};
+}
+function calculatePowerSupply(){
+const facilities=[],houses=[];
+state.grid.forEach((item,anchor)=>{if(!item||item.id==='occupied')return;const b=BUILDINGS.find(x=>x.id===item.id);if(!b)return;const row=Math.floor(anchor/SIZE),col=anchor%SIZE;if(b.powerCapacity)facilities.push({row:row+(b.rows-1)/2,col:col+(b.cols-1)/2,capacity:b.powerCapacity});if(item.id==='house')houses.push({anchor,row:row+(b.rows-1)/2,col:col+(b.cols-1)/2});});
+const capacity=facilities.reduce((sum,f)=>sum+f.capacity,0);
+const sorted=houses.map(h=>({anchor:h.anchor,distance:facilities.length?Math.min(...facilities.map(f=>Math.hypot(h.row-f.row,h.col-f.col))):Infinity})).sort((a,b)=>a.distance-b.distance||a.anchor-b.anchor);
+const servedAnchors=new Set(sorted.slice(0,capacity).map(h=>h.anchor));return {served:servedAnchors.size,total:houses.length,capacity,servedAnchors};
+}
+function calculatePollutionCoverage(){
+const ranks=Array(TOTAL).fill(0);
+state.grid.forEach((item,anchor)=>{if(!item||item.id==='occupied')return;const b=BUILDINGS.find(x=>x.id===item.id&&x.pollutionRadius);if(!b)return;const row=Math.floor(anchor/SIZE)+(b.rows-1)/2,col=anchor%SIZE+(b.cols-1)/2;const radius=b.pollutionRadius;for(let r=Math.max(0,Math.floor(row-radius));r<=Math.min(SIZE-1,Math.ceil(row+radius));r++)for(let c=Math.max(0,Math.floor(col-radius));c<=Math.min(SIZE-1,Math.ceil(col+radius));c++){if(Math.hypot(r-row,c-col)<=radius){const idx=r*SIZE+c;ranks[idx]=Math.max(ranks[idx],b.pollutionRank);}}});return ranks;
+}
+function refreshPowerIndicators(){
+if(!scene)return;if(powerIndicatorsGroup){scene.remove(powerIndicatorsGroup);powerIndicatorsGroup=null;}const supply=calculatePowerSupply();powerIndicatorsGroup=new THREE.Group();const mat=new THREE.MeshBasicMaterial({color:0xffd447});const sphere=new THREE.SphereGeometry(.075,10,8),cone=new THREE.ConeGeometry(.07,.14,8);supply.servedAnchors.forEach(anchor=>{const tile=tiles[anchor];if(!tile)return;const marker=new THREE.Group();const top=new THREE.Mesh(cone,mat);top.position.y=.1;marker.add(top);const dot=new THREE.Mesh(sphere,mat);dot.position.y=.02;marker.add(dot);marker.position.set(tile.position.x+.18,1.85,tile.position.z+.18);powerIndicatorsGroup.add(marker);});scene.add(powerIndicatorsGroup);
+}
+function refreshPollutionCoverage(){
+if(!scene||!tiles.length)return;if(pollutionGroup){scene.remove(pollutionGroup);pollutionGroup=null;}const ranks=calculatePollutionCoverage();if(!pollutionVisible)return;pollutionGroup=new THREE.Group();const mats={1:new THREE.MeshBasicMaterial({color:0xe5a23d,transparent:true,opacity:.26,depthWrite:false}),2:new THREE.MeshBasicMaterial({color:0xb95b46,transparent:true,opacity:.34,depthWrite:false})};const geom=new THREE.PlaneGeometry(CELL_SIZE*.96,CELL_SIZE*.96);ranks.forEach((rank,i)=>{if(!rank)return;const mesh=new THREE.Mesh(geom,mats[rank]);mesh.rotation.x=-Math.PI/2;mesh.position.set(tiles[i].position.x,.084,tiles[i].position.z);mesh.renderOrder=4;pollutionGroup.add(mesh);});scene.add(pollutionGroup);
 }
 function refreshWaterIndicators(){
 if(!scene)return;
@@ -423,6 +468,8 @@ scene.add(m);meshes[i]=m;
 refreshPoliceCoverage();
 refreshHealthCoverage();
 refreshWaterIndicators();
+refreshPowerIndicators();
+refreshPollutionCoverage();
 }
 function init3D(){
 const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
