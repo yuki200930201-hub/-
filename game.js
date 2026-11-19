@@ -18,8 +18,8 @@ const BUILDINGS=[
 {id:'pumping_station',name:'ポンプ場',emoji:'🚰',wood:8,coin:7,pop:0,cols:4,rows:4,waterCapacity:20},
 {id:'solar_plant',name:'太陽光発電所',emoji:'☀️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:8},
 {id:'wind_farm',name:'風力発電所',emoji:'🌬️',wood:5,coin:5,pop:0,cols:3,rows:3,powerCapacity:12},
-{id:'gas_plant',name:'ガス火力発電所',emoji:'🏭',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:25,pollutionRadius:5,pollutionRank:1},
-{id:'coal_plant',name:'石炭火力発電所',emoji:'🏭',wood:9,coin:9,pop:0,cols:4,rows:4,powerCapacity:40,pollutionRadius:9,pollutionRank:2}
+{id:'gas_plant',name:'ガス火力発電所',emoji:'🏭',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:25},
+{id:'coal_plant',name:'石炭火力発電所',emoji:'🏭',wood:9,coin:9,pop:0,cols:4,rows:4,powerCapacity:40}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
 const QUIZ=[
@@ -35,7 +35,7 @@ let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),leve
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
 let healthCoverageVisible=true,healthCoverageGroup=null,healthCoverageRanks=Array(TOTAL).fill(0);
-let waterIndicatorsGroup=null,powerIndicatorsGroup=null,pollutionGroup=null,pollutionVisible=true;
+let waterIndicatorsGroup=null,powerIndicatorsGroup=null;
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
@@ -74,7 +74,7 @@ const healthSummary=document.getElementById('healthCoverageSummary');if(healthSu
 const healthToggle=document.getElementById('healthCoverageToggle');if(healthToggle)healthToggle.textContent='🩺 医療範囲表示：'+(healthCoverageVisible?'ON':'OFF');
 const water=calculateWaterSupply();const waterSummary=document.getElementById('waterSupplySummary');if(waterSummary)waterSummary.textContent='給水済み住宅：'+water.served+'/'+water.total+'軒（給水能力：'+water.capacity+'軒）';
 const power=calculatePowerSupply();const powerSummary=document.getElementById('powerSupplySummary');if(powerSummary)powerSummary.textContent='電力供給済み住宅：'+power.served+'/'+power.total+'軒（供給能力：'+power.capacity+'軒）';
-const pollutionCount=calculatePollutionCoverage().filter(rank=>rank>0).length;const pollutionSummary=document.getElementById('pollutionSummary');if(pollutionSummary)pollutionSummary.textContent='公害の影響範囲：'+pollutionCount+'マス';const pollutionToggle=document.getElementById('pollutionToggle');if(pollutionToggle)pollutionToggle.textContent='🏭 公害範囲表示：'+(pollutionVisible?'ON':'OFF');
+
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -379,15 +379,8 @@ const capacity=facilities.reduce((sum,f)=>sum+f.capacity,0);
 const sorted=houses.map(h=>({anchor:h.anchor,distance:facilities.length?Math.min(...facilities.map(f=>Math.hypot(h.row-f.row,h.col-f.col))):Infinity})).sort((a,b)=>a.distance-b.distance||a.anchor-b.anchor);
 const servedAnchors=new Set(sorted.slice(0,capacity).map(h=>h.anchor));return {served:servedAnchors.size,total:houses.length,capacity,servedAnchors};
 }
-function calculatePollutionCoverage(){
-const ranks=Array(TOTAL).fill(0);
-state.grid.forEach((item,anchor)=>{if(!item||item.id==='occupied')return;const b=BUILDINGS.find(x=>x.id===item.id&&x.pollutionRadius);if(!b)return;const row=Math.floor(anchor/SIZE)+(b.rows-1)/2,col=anchor%SIZE+(b.cols-1)/2;const radius=b.pollutionRadius;for(let r=Math.max(0,Math.floor(row-radius));r<=Math.min(SIZE-1,Math.ceil(row+radius));r++)for(let c=Math.max(0,Math.floor(col-radius));c<=Math.min(SIZE-1,Math.ceil(col+radius));c++){if(Math.hypot(r-row,c-col)<=radius){const idx=r*SIZE+c;ranks[idx]=Math.max(ranks[idx],b.pollutionRank);}}});return ranks;
-}
 function refreshPowerIndicators(){
 if(!scene)return;if(powerIndicatorsGroup){scene.remove(powerIndicatorsGroup);powerIndicatorsGroup=null;}const supply=calculatePowerSupply();powerIndicatorsGroup=new THREE.Group();const mat=new THREE.MeshBasicMaterial({color:0xffd447});const sphere=new THREE.SphereGeometry(.075,10,8),cone=new THREE.ConeGeometry(.07,.14,8);supply.servedAnchors.forEach(anchor=>{const tile=tiles[anchor];if(!tile)return;const marker=new THREE.Group();const top=new THREE.Mesh(cone,mat);top.position.y=.1;marker.add(top);const dot=new THREE.Mesh(sphere,mat);dot.position.y=.02;marker.add(dot);marker.position.set(tile.position.x+.18,1.85,tile.position.z+.18);powerIndicatorsGroup.add(marker);});scene.add(powerIndicatorsGroup);
-}
-function refreshPollutionCoverage(){
-if(!scene||!tiles.length)return;if(pollutionGroup){scene.remove(pollutionGroup);pollutionGroup=null;}const ranks=calculatePollutionCoverage();if(!pollutionVisible)return;pollutionGroup=new THREE.Group();const mats={1:new THREE.MeshBasicMaterial({color:0xe5a23d,transparent:true,opacity:.26,depthWrite:false}),2:new THREE.MeshBasicMaterial({color:0xb95b46,transparent:true,opacity:.34,depthWrite:false})};const geom=new THREE.PlaneGeometry(CELL_SIZE*.96,CELL_SIZE*.96);ranks.forEach((rank,i)=>{if(!rank)return;const mesh=new THREE.Mesh(geom,mats[rank]);mesh.rotation.x=-Math.PI/2;mesh.position.set(tiles[i].position.x,.084,tiles[i].position.z);mesh.renderOrder=4;pollutionGroup.add(mesh);});scene.add(pollutionGroup);
 }
 function refreshWaterIndicators(){
 if(!scene)return;
@@ -469,7 +462,6 @@ refreshPoliceCoverage();
 refreshHealthCoverage();
 refreshWaterIndicators();
 refreshPowerIndicators();
-refreshPollutionCoverage();
 }
 function init3D(){
 const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
@@ -556,7 +548,7 @@ document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!
 document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
 document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
 document.getElementById('healthCoverageToggle').addEventListener('click',()=>{healthCoverageVisible=!healthCoverageVisible;refreshHealthCoverage();update();});
-document.getElementById('pollutionToggle').addEventListener('click',()=>{pollutionVisible=!pollutionVisible;refreshPollutionCoverage();update();});
+
 document.getElementById('closeFactoryQuiz').addEventListener('click',()=>setFactoryQuizOpen(false));
 document.getElementById('factoryQuizPanel').addEventListener('click',e=>{if(e.target.id==='factoryQuizPanel')setFactoryQuizOpen(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenuOpen(false);setFactoryQuizOpen(false)}});
