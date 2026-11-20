@@ -24,7 +24,7 @@ const BUILDINGS=[
 {id:'nuclear_plant',name:'原子力発電所',emoji:'⚛️',wood:12,coin:12,pop:0,cols:4,rows:4,powerCapacity:200},
 {id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400}
 ];
-const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:1,pop:0};
+const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:0,pop:0};
 const QUIZ=[
 ['apple','りんご',['りんご','みかん','ぶどう']],['book','本',['机','本','ペン']],['cat','ねこ',['いぬ','とり','ねこ']],['water','水',['火','水','風']],
 ['happy','うれしい',['かなしい','ねむい','うれしい']],['school','学校',['病院','学校','駅']],['friend','友だち',['友だち','先生','家族']],['morning','朝',['夜','昼','朝']],
@@ -600,8 +600,7 @@ const anchor=resolveAnchor(i);
 if(anchor<0){toast('ここには撤去するものがないよ');return;}
 const item=state.grid[anchor];
 if(item.id==='road'){
-const refundWood=Math.floor((ROAD.wood||0)/2),refundCoin=Math.floor((ROAD.coin||0)/2);
-showActionConfirm('道路を撤去しますか？','この道路を撤去してもいい？','返金：木材 +'+refundWood+' ／ コイン +'+refundCoin,'撤去する',()=>demolishAt(anchor));
+demolishAt(anchor);
 }else{
 const b=BUILDINGS.find(x=>x.id===item.id);
 if(!b){toast('この場所は撤去できないよ');return;}
@@ -612,8 +611,7 @@ return;
 }
 if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
 if(state.selected==='road'){
-if(state.coin<ROAD.coin){toast('コインが足りないよ！英語クイズに挑戦しよう');return;}
-showActionConfirm('道路を敷きますか？','このマスに道路を建設してもいい？','費用：コイン '+ROAD.coin,'建設する',()=>buildRoadAt(i));
+buildRoadAt(i);
 return;
 }
 const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
@@ -630,8 +628,7 @@ showActionConfirm(b.name+'を建設しますか？','この場所に'+b.name+'�
 }
 function buildRoadAt(i){
 if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
-if(state.coin<ROAD.coin){toast('コインが足りないよ！英語クイズに挑戦しよう');return;}
-state.coin-=ROAD.coin;state.grid[i]={id:'road'};
+state.grid[i]={id:'road'};
 toast('🛣️ 道路を敷いたよ！');
 sync();update();save(false);
 }
