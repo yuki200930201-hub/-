@@ -88,8 +88,25 @@ function updateToolStatus(){
 const el=document.getElementById('toolStatus');
 const text=document.getElementById('toolStatusText');
 const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去'};
-text.textContent=state.selected?'選択中：'+labels[state.selected]+' ｜ マップをタップしてね':'';
+text.textContent=state.selected?'選択中：'+(labels[state.selected]||state.selected)+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
+}
+function cancelSelectedTool(){
+state.selected=null;
+renderMenu.activeCategory=null;
+const guide=document.getElementById('guide');
+if(guide)guide.textContent='道路・建物・撤去を選んで、マップをタップしよう。';
+updateToolStatus();
+renderMenu();
+toast('選択をキャンセルしたよ');
+}
+function handleCancelToolInput(e){
+const target=e.target;
+const button=target&&target.closest?target.closest('#cancelTool'):null;
+if(!button)return;
+e.preventDefault();
+e.stopPropagation();
+cancelSelectedTool();
 }
 function update(){
 document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
@@ -681,12 +698,9 @@ document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(fa
 document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
 document.getElementById('healthCoverageToggle').addEventListener('click',()=>{healthCoverageVisible=!healthCoverageVisible;refreshHealthCoverage();update();});
 
-document.getElementById('cancelTool').addEventListener('click',()=>{
-if(!state.selected)return;
-state.selected=null;
-document.getElementById('guide').textContent='道路・建物・撤去を選んで、マップをタップしよう。';
-renderMenu();updateToolStatus();toast('選択をキャンセルしたよ');
-});
+// タッチ操作を優先して拾い、キーボード操作のclickもサポートする。
+document.addEventListener('pointerup',handleCancelToolInput,true);
+document.addEventListener('click',e=>{if(e.detail===0)handleCancelToolInput(e)},true);
 document.getElementById('cancelAction').addEventListener('click',closeActionConfirm);
 document.getElementById('confirmAction').addEventListener('click',runConfirmedAction);
 document.getElementById('actionConfirm').addEventListener('click',e=>{if(e.target.id==='actionConfirm')closeActionConfirm()});
