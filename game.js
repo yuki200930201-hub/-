@@ -34,7 +34,7 @@ const QUIZ=[
 ['environment','環境',['経験','環境','文化']],['improve','改善する',['改善する','想像する','招待する']],['culture','文化',['文化','自然','歴史']],['opportunity','機会',['理由','機会','結果']],
 ['comfortable','快適な',['快適な','複雑な','危険な']],['instead','その代わりに',['たとえば','その代わりに','さらに']],['prepare','準備する',['準備する','参加する','比較する']],['successful','成功した',['失敗した','成功した','有名な']]
 ];
-let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,current:null,answered:false,activeFactory:null};
+let state={wood:4,coin:3,population:0,solved:0,grid:Array(TOTAL).fill(null),level:1,selected:null,moveSource:null,current:null,answered:false,activeFactory:null};
 let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).fill(null),down={x:0,y:0};
 let pendingAction=null;
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
@@ -87,12 +87,13 @@ setFactoryQuizOpen(true);
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
 const text=document.getElementById('toolStatusText');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
 text.textContent=state.selected?'選択中：'+(labels[state.selected]||state.selected)+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
 function cancelSelectedTool(){
 state.selected=null;
+state.moveSource=null;
 renderMenu.activeCategory=null;
 const guide=document.getElementById('guide');
 if(guide)guide.textContent='道路・建物・撤去を選んで、マップをタップしよう。';
@@ -189,7 +190,7 @@ const groups=[
 {name:'発電',emoji:'⚡',ids:['wind_plant','coal_plant','large_wind_plant','solar_plant','oil_plant','nuclear_plant','fusion_plant']},
 {name:'産業',emoji:'🏭',ids:['factory']},
 {name:'道路',emoji:'🛣️',ids:['road']},
-{name:'ツール',emoji:'🧰',ids:['bulldozer']}
+{name:'ツール',emoji:'🧰',ids:['bulldozer','move']}
 ];
 const active=groups.find(group=>group.name===renderMenu.activeCategory);
 function makeBuildButton(b){
@@ -202,7 +203,7 @@ btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.
 const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>'))));
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
-state.selected=state.selected===b.id?null:b.id;
+state.selected=state.selected===b.id?null:b.id;state.moveSource=null;
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
 renderMenu.activeCategory=null;
 renderMenu();updateToolStatus();setMenuOpen(false);
@@ -227,14 +228,21 @@ const heading=document.createElement('div');heading.className='category-detail-h
 top.append(back,heading);root.appendChild(top);
 if(active.name==='ツール'){
 const grid=document.createElement('div');grid.className='buildings category-buildings';
-const erase=document.createElement('button');erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
+const erase=document.createElement('button');erase.type='button';erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
 erase.innerHTML='<span class="emoji">🚜</span><strong>撤去</strong><small>費用なし</small><small>道路・建物を撤去</small>';
 erase.addEventListener('click',()=>{
-state.selected=state.selected==='bulldozer'?null:'bulldozer';
+state.selected=state.selected==='bulldozer'?null:'bulldozer';state.moveSource=null;
 document.getElementById('guide').textContent=state.selected?'撤去ツール：マスをタップして道路や建物を取り除こう。':'ツールを選んでマップをタップしよう。';
 renderMenu.activeCategory=null;renderMenu();updateToolStatus();setMenuOpen(false);
 });
-grid.appendChild(erase);root.appendChild(grid);
+const move=document.createElement('button');move.type='button';move.className='build move-tool'+(state.selected==='move'?' selected':'');
+move.innerHTML='<span class="emoji">↔️</span><strong>移動</strong><small>建物を移動</small><small>費用なし</small>';
+move.addEventListener('click',()=>{
+state.selected=state.selected==='move'?null:'move';state.moveSource=null;
+document.getElementById('guide').textContent=state.selected?'移動ツール：移動したい建物をタップしてから、移動先を選んでね。':'ツールを選んでマップをタップしよう。';
+renderMenu.activeCategory=null;renderMenu();updateToolStatus();setMenuOpen(false);
+});
+grid.append(erase,move);root.appendChild(grid);
 }else{
 const grid=document.createElement('div');grid.className='buildings category-buildings';
 groupItems(active).forEach(b=>grid.appendChild(makeBuildButton(b)));
@@ -583,7 +591,7 @@ scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE
 const ground=new THREE.Mesh(new THREE.BoxGeometry(20.5,.5,20.5),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
 const offset=(SIZE-1)*CELL_SPACING/2;
 for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE,.12,CELL_SIZE),new THREE.MeshStandardMaterial({color:0xb8c4b5,roughness:.95}));tile.position.set(c*CELL_SPACING-offset,0,r*CELL_SPACING-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
-raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const buildingHits=raycaster.intersectObjects(meshes.filter(Boolean),true);if(state.selected!=='bulldozer'&&buildingHits.length){let root=buildingHits[0].object;while(root&&root!==scene&&!Number.isInteger(root.userData.cellIndex))root=root.parent;if(root&&root!==scene&&root.userData.buildingId==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(root.userData.cellIndex);return;}}const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(state.selected!=='bulldozer'){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(anchor);return;}}place(index)}});
+raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const buildingHits=raycaster.intersectObjects(meshes.filter(Boolean),true);if(!state.selected&&buildingHits.length){let root=buildingHits[0].object;while(root&&root!==scene&&!Number.isInteger(root.userData.cellIndex))root=root.parent;if(root&&root!==scene&&root.userData.buildingId==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(root.userData.cellIndex);return;}}const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(!state.selected){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(anchor);return;}}place(index)}});
 window.addEventListener('resize',()=>{const ww=el.clientWidth,hh=el.clientHeight;camera.aspect=ww/hh;camera.updateProjectionMatrix();renderer.setSize(ww,hh)});
 sync();(function animate(){requestAnimationFrame(animate);meshes.forEach(m=>{if(m&&m.scale.x<(m.userData.targetScale||1)-.005){const target=m.userData.targetScale||1;m.scale.x+=(target-m.scale.x)*.14;m.scale.y+=(1-m.scale.y)*.14;m.scale.z+=(target-m.scale.z)*.14}});controls.update();renderer.render(scene,camera)})();
 }
@@ -611,8 +619,49 @@ const item=state.grid[index];
 if(index===anchor||(item&&item.id==='occupied'&&item.anchor===anchor))state.grid[index]=null;
 }
 }
+function moveBuildingTo(source,destination,item,b){
+const oldAnchor=source;
+clearBuilding(oldAnchor);
+state.grid[destination]={...item};
+for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++){
+if(dr===0&&dc===0)continue;
+state.grid[(Math.floor(destination/SIZE)+dr)*SIZE+(destination%SIZE+dc)]={id:'occupied',anchor:destination};
+}
+if(state.activeFactory===oldAnchor)state.activeFactory=destination;
+state.moveSource=null;
+toast(b.name+'を移動したよ！');
+sync();update();save(false);
+}
+function attemptMove(i){
+if(!Number.isInteger(state.moveSource)){
+const anchor=resolveAnchor(i);
+if(anchor<0){toast('移動したい建物をタップしてね');return;}
+const item=state.grid[anchor];
+const b=BUILDINGS.find(x=>x.id===item.id);
+if(!b){toast('道路は移動できないよ。建物を選んでね');return;}
+state.moveSource=anchor;
+toast(b.name+'を選択！移動先をタップしてね');
+document.getElementById('guide').textContent=b.name+'を選択中：移動先をタップしてね。';
+return;
+}
+const source=state.moveSource;
+const item=state.grid[source];
+const b=item&&BUILDINGS.find(x=>x.id===item.id);
+if(!b){state.moveSource=null;toast('移動する建物が見つからないよ');return;}
+if(i===source){toast('別の場所を選んでね');return;}
+const row=Math.floor(i/SIZE),col=i%SIZE;
+if(row+b.rows>SIZE||col+b.cols>SIZE){toast('建物がマップ内に収まる場所を選んでね');return;}
+const footprint=[];
+for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++)footprint.push((row+dr)*SIZE+col+dc);
+const sourceCells=new Set();
+for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++)sourceCells.add((Math.floor(source/SIZE)+dr)*SIZE+source%SIZE+dc);
+if(footprint.some(index=>state.grid[index]&&!sourceCells.has(index))){toast('移動先が他の建物や道路と重なっているよ');return;}
+if(!hasAdjacentRoad(i,b)){toast('移動先の建物の外周にも道路をつなげてね');return;}
+showActionConfirm(b.name+'を移動しますか？','この建物を選んだ場所へ移してもいい？','費用・人口は変わらないよ　｜　敷地 '+b.cols+'×'+b.rows,'移動する',()=>moveBuildingTo(source,i,item,b));
+}
 function place(i){
 if(!state.selected){toast('まずツールを選んでね！');return;}
+if(state.selected==='move'){attemptMove(i);return;}
 if(state.selected==='bulldozer'){
 const anchor=resolveAnchor(i);
 if(anchor<0){toast('ここには撤去するものがないよ');return;}
