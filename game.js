@@ -561,16 +561,35 @@ overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.078,tile.pos
 scene.add(healthCoverageGroup);
 }
 
+function setBuildingMoveTint(mesh,active){
+if(!mesh)return;
+mesh.traverse(obj=>{
+if(!obj.material)return;
+const mats=Array.isArray(obj.material)?obj.material:[obj.material];
+mats.forEach(mat=>{
+if(!mat.emissive)return;
+if(active){
+if(!mat.userData.moveTintOriginal){mat.userData.moveTintOriginal={color:mat.emissive.clone(),intensity:mat.emissiveIntensity};}
+mat.emissive.setHex(0x087a24);mat.emissiveIntensity=Math.max(.65,mat.emissiveIntensity||0);
+}else if(mat.userData.moveTintOriginal){
+mat.emissive.copy(mat.userData.moveTintOriginal.color);mat.emissiveIntensity=mat.userData.moveTintOriginal.intensity;
+delete mat.userData.moveTintOriginal;
+}
+});
+});
+}
 function updateMoveHighlight(){
 if(!tiles.length)return;
-const base=0xb8c4b5,highlight=0x267a35;
+const base=0xb8c4b5,highlight=0x176b2a;
 for(const tile of tiles){tile.material.color.setHex(base);tile.material.emissive.setHex(0x000000);tile.material.emissiveIntensity=0;}
+meshes.forEach(mesh=>setBuildingMoveTint(mesh,false));
 if(!Number.isInteger(state.moveSource))return;
 const source=state.moveSource,item=state.grid[source],b=item&&BUILDINGS.find(x=>x.id===item.id);
 if(!b)return;
 const row=Math.floor(source/SIZE),col=source%SIZE;
 for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++){
-const tile=tiles[(row+dr)*SIZE+col+dc];if(tile){tile.material.color.setHex(highlight);tile.material.emissive.setHex(0x0b3d16);tile.material.emissiveIntensity=.28;}}
+const tile=tiles[(row+dr)*SIZE+col+dc];if(tile){tile.material.color.setHex(highlight);tile.material.emissive.setHex(0x064014);tile.material.emissiveIntensity=.48;}}
+setBuildingMoveTint(meshes[source],true);
 }
 
 function sync(){
@@ -596,6 +615,7 @@ refreshPoliceCoverage();
 refreshHealthCoverage();
 refreshWaterIndicators();
 refreshPowerIndicators();
+updateMoveHighlight();
 }
 function init3D(){
 const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
