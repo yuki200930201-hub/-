@@ -164,3 +164,7 @@ button.secondary{background:#e9eff4;color:#536273}
 .action-confirm-yes{background:#4b9fd0;color:#fff}
 .action-confirm-buttons button:active{transform:scale(.98)}
 @media(max-width:520px){.action-confirm-card{padding:15px}.action-confirm-heading strong{font-size:15px}}
+
+/* 建物移動ツール */
+.build.move-tool{border-style:solid;border-color:#b8d9e9;background:#f0f9ff}
+.build.move-tool.selected{border-color:#3498c9;background:#e1f5ff;box-shadow:0 0 0 2px #3498c933}
