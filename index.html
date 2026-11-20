@@ -58,6 +58,13 @@
     <div class="sub">供給：貯水塔100　貯水槽200　ポンプ場400</div>
     <div class="sub">給水された住宅には青い水滴マークが付くよ。</div>
   </section>
+  <section id="garbageSystemInfo" class="menu-section system-info-item" hidden>
+    <h2>🗑️ ゴミ処理システム</h2>
+    <p class="sub">家・ビルのゴミ需要を、近いゴミ処理施設から順に処理するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="garbageSupplySummary">ゴミ処理：処理済み需要 0 / 0（処理能力 0）</div>
+    <div class="sub">処理能力：ゴミ集積所100　ゴミ焼却場200　リサイクル工場450</div>
+    <div class="sub">ゴミ処理ができている住宅には緑色のゴミ箱マークが付くよ。</div>
+  </section>
   <section id="powerSystemInfo" class="menu-section system-info-item" hidden>
     <h2>⚡ 電力システム</h2>
     <p class="sub">家・ビルの需要を、近い発電所から順に供給するよ。家の需要は10、ビルは30。</p>
@@ -113,6 +120,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"><span id="toolStatusText"></span><button id="cancelTool" class="tool-status-cancel" type="button">キャンセル</button></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=move-source-green-highlight-20261120r"></script>
+<script src="game.js?v=garbage-system-buildings-20261120s"></script>
 </body>
 </html>
