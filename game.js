@@ -66,6 +66,7 @@ function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
 menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
 toggle.setAttribute('aria-expanded',String(open));
+refreshPoliceCoverage();refreshHealthCoverage();
 }
 function setFactoryQuizOpen(open){
 const panel=document.getElementById('factoryQuizPanel');
@@ -226,6 +227,7 @@ function groupItems(group){return group.ids.map(id=>id==='road'?ROAD:BUILDINGS.f
 const systemInfoByCategory={'警察':'policeSystemInfo','医療':'healthSystemInfo','水道':'waterSystemInfo','発電':'powerSystemInfo'};
 const visibleSystemInfo=systemInfoByCategory[renderMenu.activeCategory]||'';
 document.querySelectorAll('.system-info-item').forEach(panel=>{panel.hidden=panel.id!==visibleSystemInfo;});
+refreshPoliceCoverage();refreshHealthCoverage();
 }
 function seededRandom(seed){
 let x=(Number(seed)||1)>>>0;
@@ -493,7 +495,9 @@ function refreshPoliceCoverage(){
 if(!scene||!tiles.length)return;
 if(policeCoverageGroup){scene.remove(policeCoverageGroup);policeCoverageGroup=null;}
 policeCoverageRanks=calculatePoliceCoverage();
-if(!policeCoverageVisible)return;
+const menu=document.getElementById('gameMenu');
+const categoryActive=!!menu&&menu.classList.contains('open')&&renderMenu.activeCategory==='警察';
+if(!policeCoverageVisible||!categoryActive)return;
 policeCoverageGroup=new THREE.Group();
 const materials={
 1:new THREE.MeshBasicMaterial({color:0x5da9e8,transparent:true,opacity:.28,depthWrite:false}),
@@ -512,7 +516,9 @@ function refreshHealthCoverage(){
 if(!scene||!tiles.length)return;
 if(healthCoverageGroup){scene.remove(healthCoverageGroup);healthCoverageGroup=null;}
 healthCoverageRanks=calculateHealthCoverage();
-if(!healthCoverageVisible)return;
+const menu=document.getElementById('gameMenu');
+const categoryActive=!!menu&&menu.classList.contains('open')&&renderMenu.activeCategory==='医療';
+if(!healthCoverageVisible||!categoryActive)return;
 healthCoverageGroup=new THREE.Group();
 const materials={
 1:new THREE.MeshBasicMaterial({color:0x55c4d2,transparent:true,opacity:.30,depthWrite:false}),
