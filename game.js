@@ -94,6 +94,7 @@ el.classList.toggle('show',!!state.selected);
 function cancelSelectedTool(){
 state.selected=null;
 state.moveSource=null;
+updateMoveHighlight();
 renderMenu.activeCategory=null;
 const guide=document.getElementById('guide');
 if(guide)guide.textContent='道路・建物・撤去を選んで、マップをタップしよう。';
@@ -203,7 +204,7 @@ btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.
 const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>'))));
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
-state.selected=state.selected===b.id?null:b.id;state.moveSource=null;
+state.selected=state.selected===b.id?null:b.id;state.moveSource=null;updateMoveHighlight();
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
 renderMenu.activeCategory=null;
 renderMenu();updateToolStatus();setMenuOpen(false);
@@ -231,14 +232,14 @@ const grid=document.createElement('div');grid.className='buildings category-buil
 const erase=document.createElement('button');erase.type='button';erase.className='build erase-tool'+(state.selected==='bulldozer'?' selected':'');
 erase.innerHTML='<span class="emoji">🚜</span><strong>撤去</strong><small>費用なし</small><small>道路・建物を撤去</small>';
 erase.addEventListener('click',()=>{
-state.selected=state.selected==='bulldozer'?null:'bulldozer';state.moveSource=null;
+state.selected=state.selected==='bulldozer'?null:'bulldozer';state.moveSource=null;updateMoveHighlight();
 document.getElementById('guide').textContent=state.selected?'撤去ツール：マスをタップして道路や建物を取り除こう。':'ツールを選んでマップをタップしよう。';
 renderMenu.activeCategory=null;renderMenu();updateToolStatus();setMenuOpen(false);
 });
 const move=document.createElement('button');move.type='button';move.className='build move-tool'+(state.selected==='move'?' selected':'');
 move.innerHTML='<span class="emoji">↔️</span><strong>移動</strong><small>建物を移動</small><small>費用なし</small>';
 move.addEventListener('click',()=>{
-state.selected=state.selected==='move'?null:'move';state.moveSource=null;
+state.selected=state.selected==='move'?null:'move';state.moveSource=null;updateMoveHighlight();
 document.getElementById('guide').textContent=state.selected?'移動ツール：移動したい建物をタップしてから、移動先を選んでね。':'ツールを選んでマップをタップしよう。';
 renderMenu.activeCategory=null;renderMenu();updateToolStatus();setMenuOpen(false);
 });
@@ -559,6 +560,19 @@ overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.078,tile.pos
 });
 scene.add(healthCoverageGroup);
 }
+
+function updateMoveHighlight(){
+if(!tiles.length)return;
+const base=0xb8c4b5,highlight=0x267a35;
+for(const tile of tiles){tile.material.color.setHex(base);tile.material.emissive.setHex(0x000000);tile.material.emissiveIntensity=0;}
+if(!Number.isInteger(state.moveSource))return;
+const source=state.moveSource,item=state.grid[source],b=item&&BUILDINGS.find(x=>x.id===item.id);
+if(!b)return;
+const row=Math.floor(source/SIZE),col=source%SIZE;
+for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++){
+const tile=tiles[(row+dr)*SIZE+col+dc];if(tile){tile.material.color.setHex(highlight);tile.material.emissive.setHex(0x0b3d16);tile.material.emissiveIntensity=.28;}}
+}
+
 function sync(){
 for(let i=0;i<TOTAL;i++){
 const item=state.grid[i];
@@ -629,6 +643,7 @@ state.grid[(Math.floor(destination/SIZE)+dr)*SIZE+(destination%SIZE+dc)]={id:'oc
 }
 if(state.activeFactory===oldAnchor)state.activeFactory=destination;
 state.moveSource=null;
+updateMoveHighlight();
 toast(b.name+'を移動したよ！');
 sync();update();save(false);
 }
@@ -640,6 +655,7 @@ const item=state.grid[anchor];
 const b=BUILDINGS.find(x=>x.id===item.id);
 if(!b){toast('道路は移動できないよ。建物を選んでね');return;}
 state.moveSource=anchor;
+updateMoveHighlight();
 toast(b.name+'を選択！移動先をタップしてね');
 document.getElementById('guide').textContent=b.name+'を選択中：移動先をタップしてね。';
 return;
@@ -647,7 +663,7 @@ return;
 const source=state.moveSource;
 const item=state.grid[source];
 const b=item&&BUILDINGS.find(x=>x.id===item.id);
-if(!b){state.moveSource=null;toast('移動する建物が見つからないよ');return;}
+if(!b){state.moveSource=null;updateMoveHighlight();toast('移動する建物が見つからないよ');return;}
 if(i===source){toast('別の場所を選んでね');return;}
 const row=Math.floor(i/SIZE),col=i%SIZE;
 if(row+b.rows>SIZE||col+b.cols>SIZE){toast('建物がマップ内に収まる場所を選んでね');return;}
