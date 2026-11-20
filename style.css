@@ -49,9 +49,9 @@ button.secondary{background:#e9eff4;color:#536273}
 .actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .solved-line{margin-top:8px}
 .menu-foot{padding-top:9px;border-top:1px solid #e8eef1;font-size:10px;color:#93a0ad}
-#toolStatus{position:fixed;z-index:5;left:50%;bottom:16px;max-width:calc(100vw - 28px);display:flex;align-items:center;gap:9px;padding:8px 10px 8px 13px;border:1px solid #ffffffc9;border-radius:30px;background:#ffffffdf;backdrop-filter:blur(10px);box-shadow:0 4px 18px #40566b20;color:#35445b;font-size:12px;font-weight:800;opacity:0;transform:translate(-50%,12px);pointer-events:none;transition:.18s}
-#toolStatus.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-.tool-status-cancel{flex:0 0 auto;border:0;border-radius:18px;padding:5px 10px;background:#e8eef4;color:#526477;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+#toolStatus{position:fixed;z-index:1000;left:50%;bottom:16px;max-width:calc(100vw - 28px);display:flex;align-items:center;gap:9px;padding:8px 10px 8px 13px;border:1px solid #ffffffc9;border-radius:30px;background:#ffffffdf;backdrop-filter:blur(10px);box-shadow:0 4px 18px #40566b20;color:#35445b;font-size:12px;font-weight:800;opacity:0;visibility:hidden;transform:translate(-50%,12px);pointer-events:none;transition:opacity .18s,transform .18s,visibility .18s}
+#toolStatus.show{opacity:1;visibility:visible;transform:translate(-50%,0);pointer-events:auto}
+.tool-status-cancel{position:relative;z-index:1001;flex:0 0 auto;border:0;border-radius:18px;padding:7px 12px;min-height:32px;background:#e8eef4;color:#526477;font:inherit;font-size:11px;font-weight:800;cursor:pointer;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .tool-status-cancel:active{transform:scale(.97)}
 #toast{position:fixed;z-index:12;left:50%;bottom:58px;max-width:calc(100vw - 30px);transform:translate(-50%,20px);padding:11px 18px;border-radius:30px;background:#334155;color:white;font-size:13px;text-align:center;opacity:0;transition:.2s;pointer-events:none}
 #toast.show{opacity:1;transform:translate(-50%,0)}
