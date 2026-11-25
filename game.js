@@ -121,7 +121,7 @@ e.stopPropagation();
 cancelSelectedTool();
 }
 function update(){
-document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;document.getElementById('roads').textContent=state.grid.filter(x=>x&&x.id==='road').length;
+document.getElementById('wood').textContent=state.wood;document.getElementById('coin').textContent=state.coin;document.getElementById('population').textContent=state.population;document.getElementById('solved').textContent=state.solved;document.getElementById('level').textContent=state.level;
 const police=calculatePoliceSupply();const summary=document.getElementById('policeCoverageSummary');if(summary)summary.textContent='警察：供給済み需要 '+police.servedDemand+' / '+police.totalDemand+'（供給能力 '+police.capacity+'）';
 const toggle=document.getElementById('coverageToggle');if(toggle)toggle.textContent='🛡️ 効果範囲表示：'+(policeCoverageVisible?'ON':'OFF');
 const health=calculateHealthSupply();const healthSummary=document.getElementById('healthCoverageSummary');if(healthSummary)healthSummary.textContent='医療：供給済み需要 '+health.servedDemand+' / '+health.totalDemand+'（供給能力 '+health.capacity+'）';
