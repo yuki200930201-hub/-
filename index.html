@@ -51,6 +51,15 @@
     <div class="sub">供給：診療所100　病院200　大学病院400</div>
     <div class="sub">効果範囲：診療所4マス　病院8マス　大学病院12マス</div>
   </section>
+  <section id="fireSystemInfo" class="menu-section system-info-item" hidden>
+    <h2>🚒 消防システム</h2>
+    <p class="sub">家・ビルの消防需要を、効果範囲内の近い消防施設から順に対応するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="fireCoverageSummary">消防：対応済み需要 0 / 0（消防能力 0）</div>
+    <div class="actions"><button id="fireCoverageToggle" class="action secondary">🚒 消防範囲表示：ON</button></div>
+    <div class="sub">消防能力：小さな消防署100　消防署200　中央消防署400</div>
+    <div class="sub">効果範囲：小さな消防署4マス　消防署8マス　中央消防署12マス</div>
+    <div class="sub">消防対応できている住宅には赤色の消防マークが付くよ。</div>
+  </section>
   <section id="waterSystemInfo" class="menu-section system-info-item" hidden>
     <h2>💧 水道システム</h2>
     <p class="sub">家・ビルの需要を、近い水道施設から順に供給するよ。家の需要は10、ビルは30。</p>
@@ -120,6 +129,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"><span id="toolStatusText"></span><button id="cancelTool" class="tool-status-cancel" type="button">キャンセル</button></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=garbage-system-buildings-20261120s"></script>
+<script src="game.js?v=fire-service-20261125a"></script>
 </body>
 </html>
