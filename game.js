@@ -409,6 +409,100 @@ box(.2,.06,.2,0x286d4b,.8,x,-.65);
 }
 box(.42,.08,.05,0x2a8d55,1.1,0,.3);box(.08,.34,.05,0x2a8d55,1.1,0,.3);
 }
+
+if(id==='small_fire_station'){
+// 仮デザイン：白い小型消防署に赤い車庫と屋上サイレンを配置。
+box(1.52,.1,1.48,0x78868a,.13);
+box(1.38,.82,1.18,0xf0eee6,.59,0,-.04);
+box(1.48,.12,1.28,0xc94c43,1.06,0,-.04);
+box(.74,.52,.045,0xc94c43,.39,0,.565);
+for(let y of [.27,.39,.51])box(.66,.018,.018,0xf5d7c9,y,0,.592);
+box(.18,.28,.045,0x7dc8df,.72,-.43,.565);
+box(.2,.42,.055,0x8d6249,.29,.43,.565);
+box(.27,.07,.08,0xe4e8e7,.84,0,.59);
+box(.16,.12,.16,0x596a75,1.18,-.42,-.38);
+add(new THREE.Mesh(new THREE.SphereGeometry(.095,10,8),mat(0xf05a4f)), -.42,1.34,-.38);
+}
+if(id==='fire_station'){
+// 仮デザイン：2台分の車庫を備えた中規模消防署。
+box(2.12,.12,2.04,0x78868a,.14);
+box(2.02,1.04,1.78,0xf1eee7,.66,0,-.04);
+box(2.14,.14,1.9,0xb83f39,1.25,0,-.04);
+box(2.06,.08,.2,0xf7f0e4,1.14,0,.82);
+for(const x of [-.48,.48]){
+box(.72,.62,.055,0xc94c43,.43,x,.865);
+for(let y of [.23,.36,.49,.62])box(.64,.018,.018,0xf4d8ce,y,x,.897);
+box(.28,.24,.05,0x83c9e2,.87,x,-.945);
+}
+box(.22,.42,.06,0x8b6249,.29,.82,.865);
+box(.26,.08,.07,0x566b78,1.34,0,-.04);
+for(const x of [-.65,.65])box(.12,.08,.12,0xe4e9ed,1.38,x,-.04);
+add(new THREE.Mesh(new THREE.SphereGeometry(.09,10,8),mat(0xf05a4f)),0,1.48,0);
+}
+if(id==='central_fire_station'){
+// 仮デザイン：3台分の大型車庫と訓練用ホース塔を備えた中央消防署。
+box(2.78,.14,2.72,0x78868a,.15);
+box(2.58,1.18,2.18,0xf0eee7,.73,0,.12);
+box(2.72,.16,2.34,0xb83e38,1.4,0,.12);
+for(const x of [-.78,0,.78]){
+box(.65,.7,.06,0xc94b43,.49,x,1.23);
+for(let y of [.28,.42,.56,.7])box(.58,.018,.018,0xf4d8ce,y,x,1.265);
+}
+box(.22,.48,.06,0x8b6249,.32,1.12,1.23);
+box(.58,.08,.62,0xdfe7e8,1.48,.9,-.58);
+box(.62,2.12,.66,0xe2e7e8,1.16,.91,-.72);
+box(.68,.12,.72,0xb83e38,2.24,.91,-.72);
+for(let y=.55;y<2.05;y+=.38)box(.7,.035,.74,0xc0c9cc,y,.91,-.72);
+for(let y=.68;y<1.9;y+=.38)box(.06,.19,.03,0x79bcd4,y,.91,-.365);
+box(.34,.08,.08,0xe6e9e7,1.52,-.72,.12);
+add(new THREE.Mesh(new THREE.SphereGeometry(.11,10,8),mat(0xf05a4f)), -.72,1.66,.12);
+}
+if(id==='small_sewer_pipe'){
+// 仮デザイン：小型ポンプ小屋と点検槽を組み合わせた簡易下水施設。
+box(1.52,.12,1.48,0x7b8889,.14);
+box(.82,.7,.78,0xc8d1cf,.49,-.28,-.28);
+box(.9,.1,.86,0x547d83,.89,-.28,-.28);
+box(.34,.25,.045,0x65b9c9,.48,-.28,.125);
+add(new THREE.Mesh(new THREE.CylinderGeometry(.34,.38,.42,14),mat(0x9eaaa7)), .42,.42,.35);
+add(new THREE.Mesh(new THREE.CylinderGeometry(.29,.29,.035,14),mat(0x537e82)), .42,.65,.35);
+const hatch=add(new THREE.Mesh(new THREE.TorusGeometry(.31,.025,6,18),mat(0x587b7e)),.42,.68,.35);
+hatch.rotation.x=Math.PI/2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.62,8),mat(0x66878a)),.05,.28,.18).rotation.z=Math.PI/2;
+box(.18,.08,.18,0xe0bd69,.97,-.28,-.28);
+}
+if(id==='sewer_pipe'){
+// 仮デザイン：2つの沈殿槽と管理棟を備えた中規模下水処理施設。
+box(2.18,.13,2.08,0x7b8988,.14);
+box(1.02,.72,.78,0xc7d0ce,.48,0,-.66);
+box(1.08,.1,.84,0x4e777d,.89,0,-.66);
+box(.44,.28,.045,0x66b9ca,.52,0,.742);
+for(const x of [-.57,.57]){
+add(new THREE.Mesh(new THREE.CylinderGeometry(.43,.47,.48,16),mat(0x9daaa7)),x,.4,.38);
+add(new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.035,16),mat(0x5b8989)),x,.66,.38);
+const rim=add(new THREE.Mesh(new THREE.TorusGeometry(.39,.025,6,20),mat(0x617e7d)),x,.69,.38);
+rim.rotation.x=Math.PI/2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.52,8),mat(0x66878a)),x,.32,-.12).rotation.z=Math.PI/2;
+}
+box(1.8,.06,.08,0x718b89,.28,0,.05);
+}
+if(id==='large_sewage_plant'){
+// 仮デザイン：大型の沈殿槽・処理水槽・管理棟を備えた下水処理場。
+box(2.78,.15,2.76,0x778684,.15);
+box(1.2,.82,.92,0xc7d0ce,.56,0,-.87);
+box(1.28,.12,1.0,0x4e777d,1.03,0,-.87);
+box(.48,.32,.05,0x65b7c8,.62,0,.605);
+for(const x of [-.88,0,.88]){
+add(new THREE.Mesh(new THREE.CylinderGeometry(.43,.48,.5,18),mat(0xa2adaa)),x,.43,.38);
+add(new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.04,18),mat(0x5b8e8b)),x,.7,.38);
+const rim=add(new THREE.Mesh(new THREE.TorusGeometry(.4,.028,6,22),mat(0x5c7d7b)),x,.73,.38);
+rim.rotation.x=Math.PI/2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.5,8),mat(0x66878a)),x,.31,-.02).rotation.z=Math.PI/2;
+}
+box(2.34,.07,.1,0x617f7e,.29,0,-.12);
+box(.22,.54,.22,0x75878a,.48,-.96,-.92);
+box(.26,.08,.26,0x536a70,.78,-.96,-.92);
+box(.38,.11,.38,0x4e777d,.96,.77,-.87);
+}
 if(id==='solar_plant'){
 box(1.48,.08,1.48,0x586b72,.12);
 for(let x=-.42;x<=.42;x+=.42){const panel=box(.34,.035,.9,0x1e5b88,.42,x,0);panel.rotation.z=-.18;for(let z=-.25;z<=.25;z+=.25)box(.35,.015,.025,0x7fc9ec,.445,x,z);}
@@ -458,7 +552,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],garbage_site:[1.28,1.28],incinerator:[1.64,1.5],recycling_plant:[1.84,1.8],solar_plant:[1.48,1.48],wind_plant:[.75,.75],large_wind_plant:[.75,.75],oil_plant:[1.7,1.55],coal_plant:[1.72,1.55],nuclear_plant:[1.82,1.82],fusion_plant:[1.82,1.82]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],garbage_site:[1.28,1.28],incinerator:[1.64,1.5],recycling_plant:[1.84,1.8],small_sewer_pipe:[1.52,1.48],sewer_pipe:[2.18,2.08],large_sewage_plant:[2.78,2.76],small_fire_station:[1.52,1.48],fire_station:[2.14,2.04],central_fire_station:[2.78,2.72],solar_plant:[1.48,1.48],wind_plant:[.75,.75],large_wind_plant:[.75,.75],oil_plant:[1.7,1.55],coal_plant:[1.72,1.55],nuclear_plant:[1.82,1.82],fusion_plant:[1.82,1.82]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
