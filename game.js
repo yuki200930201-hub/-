@@ -19,6 +19,9 @@ const BUILDINGS=[
 {id:'garbage_site',name:'ゴミ集積所',emoji:'🗑️',wood:3,coin:2,pop:0,cols:2,rows:2,garbageCapacity:100},
 {id:'incinerator',name:'ゴミ焼却場',emoji:'♨️',wood:7,coin:6,pop:0,cols:3,rows:3,garbageCapacity:200},
 {id:'recycling_plant',name:'リサイクル工場',emoji:'♻️',wood:11,coin:10,pop:0,cols:4,rows:4,garbageCapacity:450},
+{id:'small_sewer_pipe',name:'小型下水パイプ',emoji:'🟤',wood:3,coin:2,pop:0,cols:2,rows:2,sewageCapacity:100},
+{id:'sewer_pipe',name:'下水パイプ',emoji:'🟫',wood:6,coin:5,pop:0,cols:3,rows:3,sewageCapacity:200},
+{id:'large_sewage_plant',name:'大型下水処理施設',emoji:'🏭',wood:10,coin:9,pop:0,cols:4,rows:4,sewageCapacity:400},
 {id:'small_fire_station',name:'小さな消防署',emoji:'🚒',wood:2,coin:2,pop:0,cols:2,rows:2,coverage:4,coverageRank:1,coverageType:'fire',fireCapacity:100},
 {id:'fire_station',name:'消防署',emoji:'🚒',wood:5,coin:4,pop:0,cols:3,rows:3,coverage:8,coverageRank:2,coverageType:'fire',fireCapacity:200},
 {id:'central_fire_station',name:'中央消防署',emoji:'🚒',wood:8,coin:8,pop:0,cols:4,rows:4,coverage:12,coverageRank:3,coverageType:'fire',fireCapacity:400},
@@ -46,7 +49,7 @@ let pendingAction=null;
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
 let healthCoverageVisible=true,healthCoverageGroup=null,healthCoverageRanks=Array(TOTAL).fill(0);
 let fireCoverageVisible=true,fireCoverageGroup=null,fireCoverageRanks=Array(TOTAL).fill(0);
-let waterIndicatorsGroup=null,powerIndicatorsGroup=null,garbageIndicatorsGroup=null;
+let waterIndicatorsGroup=null,powerIndicatorsGroup=null,garbageIndicatorsGroup=null,sewageIndicatorsGroup=null;
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function showActionConfirm(title,message,details,confirmLabel,onConfirm){
 pendingAction=onConfirm;
@@ -94,7 +97,7 @@ setFactoryQuizOpen(true);
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
 const text=document.getElementById('toolStatusText');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',garbage_site:'ゴミ集積所',incinerator:'ゴミ焼却場',recycling_plant:'リサイクル工場',small_fire_station:'小さな消防署',fire_station:'消防署',central_fire_station:'中央消防署',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',garbage_site:'ゴミ集積所',incinerator:'ゴミ焼却場',recycling_plant:'リサイクル工場',small_fire_station:'小さな消防署',fire_station:'消防署',central_fire_station:'中央消防署',small_sewer_pipe:'小型下水パイプ',sewer_pipe:'下水パイプ',large_sewage_plant:'大型下水処理施設',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
 text.textContent=state.selected?'選択中：'+(labels[state.selected]||state.selected)+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
@@ -128,6 +131,7 @@ const fireToggle=document.getElementById('fireCoverageToggle');if(fireToggle)fir
 const water=calculateWaterSupply();const waterSummary=document.getElementById('waterSupplySummary');if(waterSummary)waterSummary.textContent='水道：供給済み需要 '+water.servedDemand+' / '+water.totalDemand+'（供給能力 '+water.capacity+'）';
 const power=calculatePowerSupply();const powerSummary=document.getElementById('powerSupplySummary');if(powerSummary)powerSummary.textContent='電力：供給済み需要 '+power.servedDemand+' / '+power.totalDemand+'（供給能力 '+power.capacity+'）';
 const garbage=calculateGarbageSupply();const garbageSummary=document.getElementById('garbageSupplySummary');if(garbageSummary)garbageSummary.textContent='ゴミ処理：処理済み需要 '+garbage.servedDemand+' / '+garbage.totalDemand+'（処理能力 '+garbage.capacity+'）';
+const sewage=calculateSewageSupply();const sewageSummary=document.getElementById('sewageSupplySummary');if(sewageSummary)sewageSummary.textContent='下水：処理済み需要 '+sewage.servedDemand+' / '+sewage.totalDemand+'（処理能力 '+sewage.capacity+'）';
 renderMenu();updateToolStatus();
 }
 function save(show){try{localStorage.setItem(KEY,JSON.stringify({wood:state.wood,coin:state.coin,population:state.population,solved:state.solved,grid:state.grid,level:state.level}));if(show)toast('💾 セーブしたよ！')}catch(e){toast('保存できませんでした')}}
@@ -200,6 +204,7 @@ const groups=[
 {name:'消防',emoji:'🚒',ids:['small_fire_station','fire_station','central_fire_station']},
 {name:'水道',emoji:'💧',ids:['water_tower','water_tank','pumping_station']},
 {name:'ゴミ処理',emoji:'🗑️',ids:['garbage_site','incinerator','recycling_plant']},
+{name:'下水',emoji:'🚰',ids:['small_sewer_pipe','sewer_pipe','large_sewage_plant']},
 {name:'発電',emoji:'⚡',ids:['wind_plant','coal_plant','large_wind_plant','solar_plant','oil_plant','nuclear_plant','fusion_plant']},
 {name:'産業',emoji:'🏭',ids:['factory']},
 {name:'道路',emoji:'🛣️',ids:['road']},
@@ -213,7 +218,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.fireCapacity?'<small>消防能力 '+b.fireCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>'))))));
+const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.sewageCapacity?'<small>下水処理 '+b.sewageCapacity+'</small>':(b.fireCapacity?'<small>消防能力 '+b.fireCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>')))))));
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':(b.coverageType==='fire'?'🚒':'🛡️'))+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;state.moveSource=null;updateMoveHighlight();
@@ -559,6 +564,7 @@ return {servedDemand,totalDemand,capacity,servedAnchors,servedHomes:servedAnchor
 function calculateWaterSupply(){return calculateDemandSupply('waterCapacity',null)}
 function calculatePowerSupply(){return calculateDemandSupply('powerCapacity',null)}
 function calculateGarbageSupply(){return calculateDemandSupply('garbageCapacity',null)}
+function calculateSewageSupply(){return calculateDemandSupply('sewageCapacity',null)}
 function calculatePoliceSupply(){return calculateDemandSupply('policeCapacity','police')}
 function calculateHealthSupply(){return calculateDemandSupply('healthCapacity','health')}
 function calculateFireSupply(){return calculateDemandSupply('fireCapacity','fire')}
@@ -582,6 +588,14 @@ marker.position.set(tile.position.x+offset+.18,1.86,tile.position.z+offset+.18);
 marker.renderOrder=5;garbageIndicatorsGroup.add(marker);
 });
 scene.add(garbageIndicatorsGroup);
+}
+function refreshSewageIndicators(){
+if(!scene)return;
+if(sewageIndicatorsGroup){scene.remove(sewageIndicatorsGroup);sewageIndicatorsGroup=null;}
+const supply=calculateSewageSupply();sewageIndicatorsGroup=new THREE.Group();
+const pipeMat=new THREE.MeshBasicMaterial({color:0x9a6b45});const ringGeo=new THREE.TorusGeometry(.085,.025,7,12);
+supply.servedAnchors.forEach(anchor=>{const tile=tiles[anchor];if(!tile)return;const marker=new THREE.Group();const ring=new THREE.Mesh(ringGeo,pipeMat);ring.rotation.x=Math.PI/2;marker.add(ring);const dot=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),pipeMat);dot.position.y=.025;marker.add(dot);const spec=BUILDINGS.find(b=>b.id===state.grid[anchor].id);const offset=spec?(spec.cols-1)*CELL_SPACING/2:0;marker.position.set(tile.position.x+offset+.18,1.9,tile.position.z+offset+.18);marker.renderOrder=5;sewageIndicatorsGroup.add(marker);});
+scene.add(sewageIndicatorsGroup);
 }
 function refreshPowerIndicators(){
 if(!scene)return;if(powerIndicatorsGroup){scene.remove(powerIndicatorsGroup);powerIndicatorsGroup=null;}const supply=calculatePowerSupply();powerIndicatorsGroup=new THREE.Group();const mat=new THREE.MeshBasicMaterial({color:0xffd447});const sphere=new THREE.SphereGeometry(.075,10,8),cone=new THREE.ConeGeometry(.07,.14,8);supply.servedAnchors.forEach(anchor=>{const tile=tiles[anchor];if(!tile)return;const marker=new THREE.Group();const top=new THREE.Mesh(cone,mat);top.position.y=.1;marker.add(top);const dot=new THREE.Mesh(sphere,mat);dot.position.y=.02;marker.add(dot);marker.position.set(tile.position.x+.18,1.85,tile.position.z+.18);powerIndicatorsGroup.add(marker);});scene.add(powerIndicatorsGroup);
@@ -716,6 +730,7 @@ refreshHealthCoverage();
 refreshWaterIndicators();
 refreshPowerIndicators();
 refreshGarbageIndicators();
+refreshSewageIndicators();
 updateMoveHighlight();
 }
 function init3D(){
