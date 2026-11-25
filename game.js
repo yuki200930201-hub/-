@@ -19,6 +19,9 @@ const BUILDINGS=[
 {id:'garbage_site',name:'ゴミ集積所',emoji:'🗑️',wood:3,coin:2,pop:0,cols:2,rows:2,garbageCapacity:100},
 {id:'incinerator',name:'ゴミ焼却場',emoji:'♨️',wood:7,coin:6,pop:0,cols:3,rows:3,garbageCapacity:200},
 {id:'recycling_plant',name:'リサイクル工場',emoji:'♻️',wood:11,coin:10,pop:0,cols:4,rows:4,garbageCapacity:450},
+{id:'small_fire_station',name:'小さな消防署',emoji:'🚒',wood:2,coin:2,pop:0,cols:2,rows:2,coverage:4,coverageRank:1,coverageType:'fire',fireCapacity:100},
+{id:'fire_station',name:'消防署',emoji:'🚒',wood:5,coin:4,pop:0,cols:3,rows:3,coverage:8,coverageRank:2,coverageType:'fire',fireCapacity:200},
+{id:'central_fire_station',name:'中央消防署',emoji:'🚒',wood:8,coin:8,pop:0,cols:4,rows:4,coverage:12,coverageRank:3,coverageType:'fire',fireCapacity:400},
 {id:'wind_plant',name:'風力発電所',emoji:'🌬️',wood:4,coin:4,pop:0,cols:2,rows:2,powerCapacity:30},
 {id:'coal_plant',name:'石炭発電所',emoji:'🏭',wood:6,coin:6,pop:0,cols:3,rows:3,powerCapacity:50},
 {id:'large_wind_plant',name:'大型風力発電所',emoji:'🌪️',wood:7,coin:7,pop:0,cols:3,rows:3,powerCapacity:70},
@@ -42,6 +45,7 @@ let scene,camera,renderer,controls,raycaster,mouse,tiles=[],meshes=Array(TOTAL).
 let pendingAction=null;
 let policeCoverageVisible=true,policeCoverageGroup=null,policeCoverageRanks=Array(TOTAL).fill(0);
 let healthCoverageVisible=true,healthCoverageGroup=null,healthCoverageRanks=Array(TOTAL).fill(0);
+let fireCoverageVisible=true,fireCoverageGroup=null,fireCoverageRanks=Array(TOTAL).fill(0);
 let waterIndicatorsGroup=null,powerIndicatorsGroup=null,garbageIndicatorsGroup=null;
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
 function showActionConfirm(title,message,details,confirmLabel,onConfirm){
@@ -69,7 +73,7 @@ function setMenuOpen(open){
 const menu=document.getElementById('gameMenu'),toggle=document.getElementById('menuToggle');
 menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
 toggle.setAttribute('aria-expanded',String(open));
-refreshPoliceCoverage();refreshHealthCoverage();
+refreshPoliceCoverage();refreshHealthCoverage();refreshFireCoverage();
 }
 function setFactoryQuizOpen(open){
 const panel=document.getElementById('factoryQuizPanel');
@@ -90,7 +94,7 @@ setFactoryQuizOpen(true);
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
 const text=document.getElementById('toolStatusText');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',garbage_site:'ゴミ集積所',incinerator:'ゴミ焼却場',recycling_plant:'リサイクル工場',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',garbage_site:'ゴミ集積所',incinerator:'ゴミ焼却場',recycling_plant:'リサイクル工場',small_fire_station:'小さな消防署',fire_station:'消防署',central_fire_station:'中央消防署',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
 text.textContent=state.selected?'選択中：'+(labels[state.selected]||state.selected)+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
@@ -119,6 +123,8 @@ const police=calculatePoliceSupply();const summary=document.getElementById('poli
 const toggle=document.getElementById('coverageToggle');if(toggle)toggle.textContent='🛡️ 効果範囲表示：'+(policeCoverageVisible?'ON':'OFF');
 const health=calculateHealthSupply();const healthSummary=document.getElementById('healthCoverageSummary');if(healthSummary)healthSummary.textContent='医療：供給済み需要 '+health.servedDemand+' / '+health.totalDemand+'（供給能力 '+health.capacity+'）';
 const healthToggle=document.getElementById('healthCoverageToggle');if(healthToggle)healthToggle.textContent='🩺 医療範囲表示：'+(healthCoverageVisible?'ON':'OFF');
+const fire=calculateFireSupply();const fireSummary=document.getElementById('fireCoverageSummary');if(fireSummary)fireSummary.textContent='消防：対応済み需要 '+fire.servedDemand+' / '+fire.totalDemand+'（消防能力 '+fire.capacity+'）';
+const fireToggle=document.getElementById('fireCoverageToggle');if(fireToggle)fireToggle.textContent='🚒 消防範囲表示：'+(fireCoverageVisible?'ON':'OFF');
 const water=calculateWaterSupply();const waterSummary=document.getElementById('waterSupplySummary');if(waterSummary)waterSummary.textContent='水道：供給済み需要 '+water.servedDemand+' / '+water.totalDemand+'（供給能力 '+water.capacity+'）';
 const power=calculatePowerSupply();const powerSummary=document.getElementById('powerSupplySummary');if(powerSummary)powerSummary.textContent='電力：供給済み需要 '+power.servedDemand+' / '+power.totalDemand+'（供給能力 '+power.capacity+'）';
 const garbage=calculateGarbageSupply();const garbageSummary=document.getElementById('garbageSupplySummary');if(garbageSummary)garbageSummary.textContent='ゴミ処理：処理済み需要 '+garbage.servedDemand+' / '+garbage.totalDemand+'（処理能力 '+garbage.capacity+'）';
@@ -191,6 +197,7 @@ const groups=[
 {name:'環境',emoji:'🌳',ids:['park']},
 {name:'警察',emoji:'🚓',ids:['police_hq','police_station','koban']},
 {name:'医療',emoji:'🏥',ids:['clinic','hospital','university_hospital']},
+{name:'消防',emoji:'🚒',ids:['small_fire_station','fire_station','central_fire_station']},
 {name:'水道',emoji:'💧',ids:['water_tower','water_tank','pumping_station']},
 {name:'ゴミ処理',emoji:'🗑️',ids:['garbage_site','incinerator','recycling_plant']},
 {name:'発電',emoji:'⚡',ids:['wind_plant','coal_plant','large_wind_plant','solar_plant','oil_plant','nuclear_plant','fusion_plant']},
@@ -206,8 +213,8 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>')))));
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':'🛡️')+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
+const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.fireCapacity?'<small>消防能力 '+b.fireCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>'))))));
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':(b.coverageType==='fire'?'🚒':'🛡️'))+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;state.moveSource=null;updateMoveHighlight();
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
@@ -256,10 +263,10 @@ root.appendChild(grid);
 }
 }
 function groupItems(group){return group.ids.map(id=>id==='road'?ROAD:BUILDINGS.find(b=>b.id===id)).filter(Boolean)}
-const systemInfoByCategory={'警察':'policeSystemInfo','医療':'healthSystemInfo','水道':'waterSystemInfo','ゴミ処理':'garbageSystemInfo','発電':'powerSystemInfo'};
+const systemInfoByCategory={'警察':'policeSystemInfo','医療':'healthSystemInfo','消防':'fireSystemInfo','水道':'waterSystemInfo','ゴミ処理':'garbageSystemInfo','発電':'powerSystemInfo'};
 const visibleSystemInfo=systemInfoByCategory[renderMenu.activeCategory]||'';
 document.querySelectorAll('.system-info-item').forEach(panel=>{panel.hidden=panel.id!==visibleSystemInfo;});
-refreshPoliceCoverage();refreshHealthCoverage();
+refreshPoliceCoverage();refreshHealthCoverage();refreshFireCoverage();
 }
 function seededRandom(seed){
 let x=(Number(seed)||1)>>>0;
@@ -487,6 +494,23 @@ if(Math.hypot(r-centerRow,c-centerCol)<=police.coverage){const index=r*SIZE+c;ra
 });
 return ranks;
 }
+function calculateFireCoverage(){
+const ranks=Array(TOTAL).fill(0);
+state.grid.forEach((item,anchor)=>{
+if(!item||item.id==='occupied')return;
+const facility=BUILDINGS.find(b=>b.id===item.id&&b.coverage&&b.coverageType==='fire');
+if(!facility)return;
+const row=Math.floor(anchor/SIZE),col=anchor%SIZE;
+const centerRow=row+(facility.rows-1)/2,centerCol=col+(facility.cols-1)/2;
+const reach=Math.ceil(facility.coverage);
+for(let r=Math.max(0,Math.floor(centerRow-reach));r<=Math.min(SIZE-1,Math.ceil(centerRow+reach));r++){
+for(let c=Math.max(0,Math.floor(centerCol-reach));c<=Math.min(SIZE-1,Math.ceil(centerCol+reach));c++){
+if(Math.hypot(r-centerRow,c-centerCol)<=facility.coverage){const index=r*SIZE+c;ranks[index]=Math.max(ranks[index],facility.coverageRank);}
+}
+}
+});
+return ranks;
+}
 function calculateHealthCoverage(){
 const ranks=Array(TOTAL).fill(0);
 state.grid.forEach((item,anchor)=>{
@@ -537,6 +561,7 @@ function calculatePowerSupply(){return calculateDemandSupply('powerCapacity',nul
 function calculateGarbageSupply(){return calculateDemandSupply('garbageCapacity',null)}
 function calculatePoliceSupply(){return calculateDemandSupply('policeCapacity','police')}
 function calculateHealthSupply(){return calculateDemandSupply('healthCapacity','health')}
+function calculateFireSupply(){return calculateDemandSupply('fireCapacity','fire')}
 function refreshGarbageIndicators(){
 if(!scene)return;
 if(garbageIndicatorsGroup){scene.remove(garbageIndicatorsGroup);garbageIndicatorsGroup=null;}
@@ -600,6 +625,19 @@ const tile=tiles[i],overlay=new THREE.Mesh(planeGeometry,materials[rank]);
 overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.073,tile.position.z);overlay.renderOrder=2;policeCoverageGroup.add(overlay);
 });
 scene.add(policeCoverageGroup);
+}
+function refreshFireCoverage(){
+if(!scene||!tiles.length)return;
+if(fireCoverageGroup){scene.remove(fireCoverageGroup);fireCoverageGroup=null;}
+fireCoverageRanks=calculateFireCoverage();
+const menu=document.getElementById('gameMenu');
+const categoryActive=!!menu&&menu.classList.contains('open')&&renderMenu.activeCategory==='消防';
+if(!fireCoverageVisible||!categoryActive)return;
+fireCoverageGroup=new THREE.Group();
+const materials={1:new THREE.MeshBasicMaterial({color:0xf0a05a,transparent:true,opacity:.30,depthWrite:false}),2:new THREE.MeshBasicMaterial({color:0xe56b45,transparent:true,opacity:.30,depthWrite:false}),3:new THREE.MeshBasicMaterial({color:0xc94747,transparent:true,opacity:.32,depthWrite:false})};
+const planeGeometry=new THREE.PlaneGeometry(CELL_SIZE*.96,CELL_SIZE*.96);
+fireCoverageRanks.forEach((rank,i)=>{if(!rank)return;const tile=tiles[i],overlay=new THREE.Mesh(planeGeometry,materials[rank]);overlay.rotation.x=-Math.PI/2;overlay.position.set(tile.position.x,.081,tile.position.z);overlay.renderOrder=3;fireCoverageGroup.add(overlay);});
+scene.add(fireCoverageGroup);
 }
 function refreshHealthCoverage(){
 if(!scene||!tiles.length)return;
@@ -845,6 +883,7 @@ document.getElementById('menuToggle').addEventListener('click',()=>setMenuOpen(!
 document.getElementById('closeMenu').addEventListener('click',()=>setMenuOpen(false));
 document.getElementById('coverageToggle').addEventListener('click',()=>{policeCoverageVisible=!policeCoverageVisible;refreshPoliceCoverage();update();});
 document.getElementById('healthCoverageToggle').addEventListener('click',()=>{healthCoverageVisible=!healthCoverageVisible;refreshHealthCoverage();update();});
+document.getElementById('fireCoverageToggle').addEventListener('click',()=>{fireCoverageVisible=!fireCoverageVisible;refreshFireCoverage();update();});
 
 // タッチ操作を優先して拾い、キーボード操作のclickもサポートする。
 document.addEventListener('pointerup',handleCancelToolInput,true);
