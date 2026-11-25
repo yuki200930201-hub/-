@@ -74,6 +74,13 @@
     <div class="sub">処理能力：ゴミ集積所100　ゴミ焼却場200　リサイクル工場450</div>
     <div class="sub">ゴミ処理ができている住宅には緑色のゴミ箱マークが付くよ。</div>
   </section>
+  <section id="sewageSystemInfo" class="menu-section system-info-item" hidden>
+    <h2>🚰 下水システム</h2>
+    <p class="sub">家・ビルの下水需要を、近い下水施設から順に処理するよ。家の需要は10、ビルは30。</p>
+    <div class="sub" id="sewageSupplySummary">下水：処理済み需要 0 / 0（処理能力 0）</div>
+    <div class="sub">処理能力：小型下水パイプ100　下水パイプ200　大型下水処理施設400</div>
+    <div class="sub">下水処理ができている住宅には茶色のパイプマークが付くよ。</div>
+  </section>
   <section id="powerSystemInfo" class="menu-section system-info-item" hidden>
     <h2>⚡ 電力システム</h2>
     <p class="sub">家・ビルの需要を、近い発電所から順に供給するよ。家の需要は10、ビルは30。</p>
@@ -129,6 +136,6 @@
 </div>
 <div id="toolStatus" aria-live="polite"><span id="toolStatusText"></span><button id="cancelTool" class="tool-status-cancel" type="button">キャンセル</button></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="game.js?v=fire-service-20261125a"></script>
+<script src="game.js?v=sewage-system-20261125a"></script>
 </body>
 </html>
