@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const SIZE=36,TOTAL=SIZE*SIZE,CELL_SPACING=.55,CELL_SIZE=.53,KEY='english-town-3d-save-v2';
+const SIZE=72,TOTAL=SIZE*SIZE,CELL_SPACING=.55,CELL_SIZE=.53,KEY='english-town-3d-save-v2';
 const BUILDINGS=[
 {id:'park',name:'公園',emoji:'🌳',wood:1,coin:0,pop:2,cols:3,rows:3},
 {id:'house',name:'家',emoji:'🏠',wood:2,coin:0,pop:5,serviceDemand:10,cols:2,rows:2},
@@ -187,6 +187,11 @@ state.population=Math.max(0,Number(d.population)||0);state.solved=Math.max(0,Num
 state.level=Math.max(1,Number(d.level)||1);
 if(d.grid.length===TOTAL){
 state.grid=d.grid.map(normalizeCell);rebuildOccupancy();
+}else if(d.grid.length===1296){
+state.grid=Array(TOTAL).fill(null);
+// 36×36の旧フィールドを中央に配置し、既存の街の位置を維持する。
+d.grid.forEach((item,i)=>{if(item&&item.id!=='occupied')putMigratedCell(item,Math.floor(i/36)+18,(i%36)+18,1)});
+rebuildOccupancy();
 }else if(d.grid.length===324){
 state.grid=Array(TOTAL).fill(null);
 d.grid.forEach((item,i)=>{if(item&&item.id!=='occupied')putMigratedCell(item,Math.floor(i/18)*2,(i%18)*2,2)});
@@ -871,11 +876,11 @@ refreshSewageIndicators();
 updateMoveHighlight();
 }
 function init3D(){
-const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,28,55);camera=new THREE.PerspectiveCamera(44,w/h,.1,120);camera.position.set(12,14,15);
+const el=document.getElementById('world'),w=el.clientWidth,h=el.clientHeight;scene=new THREE.Scene();scene.fog=new THREE.Fog(0xcceeff,58,118);camera=new THREE.PerspectiveCamera(44,w/h,.1,220);camera.position.set(12,14,15);
 renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.appendChild(renderer.domElement);
-controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=38;
+controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=6;controls.maxDistance=110;
 scene.add(new THREE.HemisphereLight(0xffffff,0x8bbd82,1.05));const sun=new THREE.DirectionalLight(0xfff2d6,.9);sun.position.set(8,16,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
-const ground=new THREE.Mesh(new THREE.BoxGeometry(20.5,.5,20.5),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
+const ground=new THREE.Mesh(new THREE.BoxGeometry(41,.5,41),new THREE.MeshStandardMaterial({color:0x789581}));ground.position.y=-.34;ground.receiveShadow=true;scene.add(ground);
 const offset=(SIZE-1)*CELL_SPACING/2;
 for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){const i=r*SIZE+c;const tile=new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE,.12,CELL_SIZE),new THREE.MeshStandardMaterial({color:0xb8c4b5,roughness:.95}));tile.position.set(c*CELL_SPACING-offset,0,r*CELL_SPACING-offset);tile.userData.index=i;tile.receiveShadow=true;scene.add(tile);tiles.push(tile)}
 raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height*2-1);raycaster.setFromCamera(mouse,camera);const buildingHits=raycaster.intersectObjects(meshes.filter(Boolean),true);if(!state.selected&&buildingHits.length){let root=buildingHits[0].object;while(root&&root!==scene&&!Number.isInteger(root.userData.cellIndex))root=root.parent;if(root&&root!==scene&&root.userData.buildingId==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(root.userData.cellIndex);return;}}const hit=raycaster.intersectObjects(tiles)[0];if(hit){const index=hit.object.userData.index;if(!state.selected){const anchor=resolveAnchor(index);if(anchor>=0&&state.grid[anchor]&&state.grid[anchor].id==='factory'){state.selected=null;updateToolStatus();startFactoryQuiz(anchor);return;}}place(index)}});
