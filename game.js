@@ -225,7 +225,7 @@ const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
 const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.sewageCapacity?'<small>下水処理 '+b.sewageCapacity+'</small>':(b.fireCapacity?'<small>消防能力 '+b.fireCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>')))))));
-btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+(b.id==='factory'?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':(b.coverageType==='fire'?'🚒':'🛡️'))+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
+btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+((b.wood===0&&b.coin===0)?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':(b.coverageType==='fire'?'🚒':'🛡️'))+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;state.moveSource=null;updateMoveHighlight();
 document.getElementById('guide').textContent=state.selected?(b.id==='road'?'道路ツール：小さな1マスずつ道路を敷こう！':'建物ツール：'+b.cols+'×'+b.rows+'マスの空き地を選んでね。道路への接続も必要だよ。'):'ツールを選んでマップをタップしよう。';
@@ -976,7 +976,7 @@ for(let dr=0;dr<b.rows;dr++)for(let dc=0;dc<b.cols;dc++)footprint.push((row+dr)*
 if(footprint.some(index=>state.grid[index])){toast('建物は'+b.cols+'×'+b.rows+'マス必要だよ。空いている場所を選んでね！');return;}
 if(!hasAdjacentRoad(i,b)){toast('建物の'+b.cols+'×'+b.rows+'マスの外周に道路をつなげよう！');return;}
 if(state.wood<b.wood||state.coin<b.coin){toast('資源が足りないよ！クイズに挑戦しよう');return;}
-const cost=b.id==='factory'?'費用：無料':'費用：木材 '+b.wood+' ／ コイン '+b.coin;
+const cost=(b.wood===0&&b.coin===0)?'費用：無料':'費用：木材 '+b.wood+' ／ コイン '+b.coin;
 showActionConfirm(b.name+'を建設しますか？','この場所に'+b.name+'を建ててもいい？',cost+'　｜　敷地 '+b.cols+'×'+b.rows,'建設する',()=>buildBuildingAt(i,b));
 }
 function buildRoadAt(i){
