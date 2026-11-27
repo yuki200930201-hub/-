@@ -32,11 +32,11 @@ const BUILDINGS=[
 {id:'oil_plant',name:'石油発電所',emoji:'🛢️',wood:8,coin:8,pop:0,cols:3,rows:3,powerCapacity:100},
 {id:'nuclear_plant',name:'原子力発電所',emoji:'⚛️',wood:12,coin:12,pop:0,cols:4,rows:4,powerCapacity:200},
 {id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400},
-{id:'town_office',name:'町役場',emoji:'🏛️',wood:0,coin:0,pop:0,cols:3,rows:3},
-{id:'city_hall',name:'市役所',emoji:'🏢',wood:0,coin:0,pop:0,cols:3,rows:3},
-{id:'mayor_residence',name:'市長の邸宅',emoji:'🏡',wood:0,coin:0,pop:0,cols:3,rows:3},
-{id:'storage_center',name:'貯蔵センター',emoji:'🏬',wood:0,coin:0,pop:0,cols:4,rows:3},
-{id:'bank',name:'銀行',emoji:'🏦',wood:0,coin:0,pop:0,cols:3,rows:3}
+{id:'town_office',name:'町役場',emoji:'🏛️',wood:0,coin:0,pop:0,cols:3,rows:3,maxCount:1},
+{id:'city_hall',name:'市役所',emoji:'🏢',wood:0,coin:0,pop:0,cols:3,rows:3,maxCount:1},
+{id:'mayor_residence',name:'市長の邸宅',emoji:'🏡',wood:0,coin:0,pop:0,cols:3,rows:3,maxCount:1},
+{id:'storage_center',name:'貯蔵センター',emoji:'🏬',wood:0,coin:0,pop:0,cols:4,rows:3,maxCount:1},
+{id:'bank',name:'銀行',emoji:'🏦',wood:0,coin:0,pop:0,cols:3,rows:3,maxCount:1}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:0,pop:0};
 const QUIZ=[
@@ -217,6 +217,9 @@ const groups=[
 {name:'ツール',emoji:'🧰',ids:['bulldozer','move']}
 ];
 const active=groups.find(group=>group.name===renderMenu.activeCategory);
+function getBuildingLimit(b){return Number.isFinite(b.maxCount)?b.maxCount:(b.id==='factory'?3:Infinity)}
+function buildingCount(id){return state.grid.filter(x=>x&&x.id===id).length}
+function isAtBuildingLimit(b){return buildingCount(b.id)>=getBuildingLimit(b)}
 function makeBuildButton(b){
 const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
 const atLimit=b.id==='factory'&&factoryCount>=(b.maxCount||3);
@@ -224,7 +227,7 @@ const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
 btn.disabled=(!affordable&&state.selected!==b.id)||(atLimit&&state.selected!==b.id);
-const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.sewageCapacity?'<small>下水処理 '+b.sewageCapacity+'</small>':(b.fireCapacity?'<small>消防能力 '+b.fireCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+(b.id==='factory'?'設置 '+factoryCount+'/'+b.maxCount:'人口 +'+b.pop)+'</small>')))))));
+const detail=b.serviceDemand?'<small>需要 '+b.serviceDemand+'</small>':(b.policeCapacity?'<small>警察供給 '+b.policeCapacity+'</small>':(b.healthCapacity?'<small>医療供給 '+b.healthCapacity+'</small>':(b.waterCapacity?'<small>水道供給 '+b.waterCapacity+'</small>':(b.garbageCapacity?'<small>ゴミ処理 '+b.garbageCapacity+'</small>':(b.sewageCapacity?'<small>下水処理 '+b.sewageCapacity+'</small>':(b.fireCapacity?'<small>消防能力 '+b.fireCapacity+'</small>':(b.powerCapacity?'<small>電力供給 '+b.powerCapacity+'</small>':'<small>'+((Number.isFinite(b.maxCount)||b.id==='factory')?'設置 '+placedCount+'/'+getBuildingLimit(b):'人口 +'+b.pop)+'</small>')))))));
 btn.innerHTML='<span class="emoji">'+b.emoji+'</span><strong>'+b.name+'</strong>'+((b.wood===0&&b.coin===0)?'<small>無料</small>':'<small>🪵'+b.wood+'　🪙'+b.coin+'</small>')+(b.coverage?'<small>'+(b.coverageType==='health'?'🩺':(b.coverageType==='fire'?'🚒':'🛡️'))+' 半径 '+b.coverage+'</small>':'')+(b.id==='road'?'<small>道路 1×1</small>':detail+'<small>敷地 '+b.cols+'×'+b.rows+'</small>');
 btn.addEventListener('click',()=>{
 state.selected=state.selected===b.id?null:b.id;state.moveSource=null;updateMoveHighlight();
@@ -968,7 +971,7 @@ buildRoadAt(i);
 return;
 }
 const b=BUILDINGS.find(x=>x.id===state.selected);if(!b)return;
-if(b.id==='factory'&&state.grid.filter(x=>x&&x.id==='factory').length>=(b.maxCount||3)){toast('工場は最大3個までだよ！');return;}
+if(isAtBuildingLimit(b)){toast(b.name+'は最大'+getBuildingLimit(b)+'棟までだよ！');return;}
 const row=Math.floor(i/SIZE),col=i%SIZE;
 if(row+b.rows>SIZE||col+b.cols>SIZE){toast('建物の'+b.cols+'×'+b.rows+'マスがマップ内に収まる場所を選んでね');return;}
 const footprint=[];
@@ -988,7 +991,7 @@ sync();update();save(false);
 function buildBuildingAt(i,b){
 if(state.grid[i]){toast('そこにはもう何かあるよ！');return;}
 if(state.selected!==b.id){toast('建築ツールを選び直してね');return;}
-if(b.id==='factory'&&state.grid.filter(x=>x&&x.id==='factory').length>=(b.maxCount||3)){toast('工場は最大3個までだよ！');return;}
+if(isAtBuildingLimit(b)){toast(b.name+'は最大'+getBuildingLimit(b)+'棟までだよ！');return;}
 const row=Math.floor(i/SIZE),col=i%SIZE;
 if(row+b.rows>SIZE||col+b.cols>SIZE){toast('建物の'+b.cols+'×'+b.rows+'マスがマップ内に収まらないよ');return;}
 const footprint=[];
