@@ -31,7 +31,12 @@ const BUILDINGS=[
 {id:'solar_plant',name:'太陽光発電所',emoji:'☀️',wood:6,coin:5,pop:0,cols:3,rows:3,powerCapacity:80},
 {id:'oil_plant',name:'石油発電所',emoji:'🛢️',wood:8,coin:8,pop:0,cols:3,rows:3,powerCapacity:100},
 {id:'nuclear_plant',name:'原子力発電所',emoji:'⚛️',wood:12,coin:12,pop:0,cols:4,rows:4,powerCapacity:200},
-{id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400}
+{id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400},
+{id:'town_office',name:'町役場',emoji:'🏛️',wood:5,coin:4,pop:0,cols:3,rows:3},
+{id:'city_hall',name:'市役所',emoji:'🏢',wood:8,coin:7,pop:0,cols:3,rows:3},
+{id:'mayor_residence',name:'市長の邸宅',emoji:'🏡',wood:7,coin:6,pop:0,cols:3,rows:3},
+{id:'storage_center',name:'貯蔵センター',emoji:'🏬',wood:9,coin:5,pop:0,cols:4,rows:3},
+{id:'bank',name:'銀行',emoji:'🏦',wood:8,coin:10,pop:0,cols:3,rows:3}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:0,pop:0};
 const QUIZ=[
@@ -97,7 +102,7 @@ setFactoryQuizOpen(true);
 function updateToolStatus(){
 const el=document.getElementById('toolStatus');
 const text=document.getElementById('toolStatusText');
-const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',garbage_site:'ゴミ集積所',incinerator:'ゴミ焼却場',recycling_plant:'リサイクル工場',small_fire_station:'小さな消防署',fire_station:'消防署',central_fire_station:'中央消防署',small_sewer_pipe:'小型下水パイプ',sewer_pipe:'下水パイプ',large_sewage_plant:'大型下水処理施設',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
+const labels={road:'道路',park:'公園',house:'家',cafe:'カフェ',tower:'ビル',factory:'工場',town_office:'町役場',city_hall:'市役所',mayor_residence:'市長の邸宅',storage_center:'貯蔵センター',bank:'銀行',water_tower:'貯水塔',water_tank:'貯水槽',pumping_station:'ポンプ場',garbage_site:'ゴミ集積所',incinerator:'ゴミ焼却場',recycling_plant:'リサイクル工場',small_fire_station:'小さな消防署',fire_station:'消防署',central_fire_station:'中央消防署',small_sewer_pipe:'小型下水パイプ',sewer_pipe:'下水パイプ',large_sewage_plant:'大型下水処理施設',solar_plant:'太陽光発電',wind_plant:'風力発電所',large_wind_plant:'大型風力発電所',oil_plant:'石油発電所',coal_plant:'石炭発電所',nuclear_plant:'原子力発電所',fusion_plant:'核融合発電所',bulldozer:'撤去',move:'移動'};
 text.textContent=state.selected?'選択中：'+(labels[state.selected]||state.selected)+' ｜ マップをタップしてね':'';
 el.classList.toggle('show',!!state.selected);
 }
@@ -207,6 +212,7 @@ const groups=[
 {name:'下水',emoji:'🚰',ids:['small_sewer_pipe','sewer_pipe','large_sewage_plant']},
 {name:'発電',emoji:'⚡',ids:['wind_plant','coal_plant','large_wind_plant','solar_plant','oil_plant','nuclear_plant','fusion_plant']},
 {name:'産業',emoji:'🏭',ids:['factory']},
+{name:'行政',emoji:'🏛️',ids:['town_office','city_hall','mayor_residence','storage_center','bank']},
 {name:'道路',emoji:'🛣️',ids:['road']},
 {name:'ツール',emoji:'🧰',ids:['bulldozer','move']}
 ];
@@ -539,6 +545,40 @@ add(new THREE.Mesh(new THREE.SphereGeometry(.28,14,10),mat(0x8ff3ff)),0,.72,0);
 for(let n=0;n<3;n++){const ring=add(new THREE.Mesh(new THREE.TorusGeometry(.72,.035,8,24),mat(0x83c9f5)),0,.72,0);ring.rotation.set(n*Math.PI/3,.3,0);}
 box(.7,.5,.62,0x7894aa,.48,.55,-.4);box(.55,.08,.08,0x3d5d76,.76,.55,-.4);
 }
+
+if(id==='town_office'){
+// 仮デザイン：瓦屋根と正面玄関のある低層の町役場。
+box(1.48,.12,1.42,0x89969a,.14);box(1.28,.78,1.12,0xe8dfc9,.59,0,-.02);box(1.42,.12,1.26,0x687b83,1.04,0,-.02);
+const roof=add(new THREE.Mesh(new THREE.ConeGeometry(.98,.42,4),mat(0x65727b)),0,1.3,0);roof.rotation.y=Math.PI/4;
+box(.38,.5,.055,0x75583f,.37,0,.56);for(const x of [-.38,.38])box(.22,.28,.04,0x86c9df,.68,x,.56);box(.22,.26,.12,0xe7e4d8,1.18,0,.08);
+}
+if(id==='city_hall'){
+// 仮デザイン：左右に広がる庁舎と中央の時計塔。
+box(1.55,.12,1.48,0x89969a,.14);box(1.42,1.02,1.18,0xd8e0e2,.65,0,-.04);box(1.5,.12,1.26,0x547b91,1.22,0,-.04);
+box(.46,1.42,.5,0xe7eceb,.86,0,-.34);box(.52,.1,.56,0x547b91,1.62,0,-.34);add(new THREE.Mesh(new THREE.ConeGeometry(.34,.3,4),mat(0x657985)),0,1.82,-.34).rotation.y=Math.PI/4;
+box(.32,.26,.045,0x83c9df,.8,0,.57);for(const x of [-.46,.46])box(.2,.32,.04,0x83c9df,.78,x,.57);box(.22,.42,.055,0x75583f,.29,0,.59);
+}
+if(id==='mayor_residence'){
+// 仮デザイン：赤茶色の屋根と小さな庭のある邸宅。
+box(1.58,.1,1.52,0x71966a,.13);box(1.18,.78,1.02,0xf0dfbd,.59,0,-.08);box(1.34,.14,1.18,0x8b5144,1.05,0,-.08);
+const roof=add(new THREE.Mesh(new THREE.ConeGeometry(.96,.52,4),mat(0x9b5546)),0,1.36,-.08);roof.rotation.y=Math.PI/4;
+box(.3,.48,.06,0x76523d,.36,0,.46);for(const x of [-.37,.37])box(.24,.3,.04,0x8dcde0,.68,x,.46);
+box(.58,.08,.28,0xd8d2c3,.18,0,.66);for(const x of [-.62,.62]){add(new THREE.Mesh(new THREE.CylinderGeometry(.045,.07,.34,7),mat(0x805b3c)),x,.3,.48);add(new THREE.Mesh(new THREE.SphereGeometry(.22,9,8),mat(0x39834e)),x,.55,.48);}
+}
+if(id==='storage_center'){
+// 仮デザイン：シャッターと荷物パレットを備えた大型倉庫。
+box(2.02,.14,1.48,0x89979a,.15);box(1.86,1.02,1.28,0xb8c5c7,.66,0,-.04);box(1.94,.14,1.36,0x526d79,1.24,0,-.04);
+for(const x of [-.58,0,.58]){box(.48,.68,.055,0x718b92,.5,x,.62);for(const y of [.28,.4,.52,.64,.76])box(.43,.025,.025,0xd9e2df,y,x,.655);}
+for(const x of [-.58,.58]){box(.34,.24,.3,0xc89b62,.27,x,-.52);box(.36,.06,.32,0x987044,.42,x,-.52);}box(.34,.42,.06,0x6f8190,.34,0,.68);
+}
+if(id==='bank'){
+// 仮デザイン：石造りの正面に柱と三角屋根を配置した銀行。
+box(1.55,.12,1.42,0x89969a,.14);box(1.38,.92,1.16,0xe5e0d2,.62,0,-.02);
+for(const x of [-.48,-.16,.16,.48]){box(.09,.72,.12,0xf6f1e5,.58,x,.59);box(.15,.08,.18,0xd2c9b6,.96,x,.59);}
+const pediment=add(new THREE.Mesh(new THREE.ConeGeometry(.92,.38,3),mat(0xc8bda8)),0,1.25,.48);pediment.rotation.y=Math.PI;
+box(.36,.42,.055,0x6c5947,.34,0,.64);box(.5,.08,.06,0xd4b86b,.91,0,.66);
+}
+
 if(id==='tower'){
 const floors=3+Math.floor(rand()*4),floorH=range(.38,.52),w=range(.82,1.14),d=range(.82,1.14),h=floors*floorH;
 const facade=pick([0x5ab7dc,0x7394c8,0x7ab9aa,0x9d9cc9,0x8aa6bd,0x7cabbc]),glass=pick([0xe4f8ff,0xbce9f2,0xffe8a8]);
@@ -552,7 +592,7 @@ box(w*.72,.18,d*.72,pick([0x267da8,0x4c6e88,0x526b5b,0x986a63]),.08+h+.09);
 if(rand()>.45){const antenna=add(new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,range(.35,.75),6),mat(0x64748b)),0,.08+h+.48,0);antenna.castShadow=true}
 }
 g.rotation.y=Math.floor(rand()*4)*Math.PI/2;
-const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],garbage_site:[1.28,1.28],incinerator:[1.64,1.5],recycling_plant:[1.84,1.8],small_sewer_pipe:[1.52,1.48],sewer_pipe:[2.18,2.08],large_sewage_plant:[2.78,2.76],small_fire_station:[1.52,1.48],fire_station:[2.14,2.04],central_fire_station:[2.78,2.72],solar_plant:[1.48,1.48],wind_plant:[.75,.75],large_wind_plant:[.75,.75],oil_plant:[1.7,1.55],coal_plant:[1.72,1.55],nuclear_plant:[1.82,1.82],fusion_plant:[1.82,1.82]}[id];
+const spec=BUILDINGS.find(b=>b.id===id),base={park:[1.58,1.58],house:[1.37,1.34],cafe:[1.56,1.45],tower:[1.14,1.14],factory:[1.1,1.1],police_hq:[1.7,1.7],police_station:[1.1,1.1],koban:[.52,.52],clinic:[.9,.9],hospital:[1.42,1.42],university_hospital:[1.86,1.86],water_tower:[.96,.96],water_tank:[1.48,1.48],pumping_station:[1.84,1.63],garbage_site:[1.28,1.28],incinerator:[1.64,1.5],recycling_plant:[1.84,1.8],small_sewer_pipe:[1.52,1.48],sewer_pipe:[2.18,2.08],large_sewage_plant:[2.78,2.76],small_fire_station:[1.52,1.48],fire_station:[2.14,2.04],central_fire_station:[2.78,2.72],solar_plant:[1.48,1.48],wind_plant:[.75,.75],large_wind_plant:[.75,.75],oil_plant:[1.7,1.55],coal_plant:[1.72,1.55],nuclear_plant:[1.82,1.82],fusion_plant:[1.82,1.82],town_office:[1.48,1.42],city_hall:[1.55,1.48],mayor_residence:[1.58,1.52],storage_center:[2.02,1.48],bank:[1.55,1.42]}[id];
 g.scale.set(spec.cols*CELL_SPACING*.9/base[0],1,spec.rows*CELL_SPACING*.9/base[1]);
 return g;
 }
