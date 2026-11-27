@@ -221,8 +221,8 @@ function getBuildingLimit(b){return Number.isFinite(b.maxCount)?b.maxCount:(b.id
 function buildingCount(id){return state.grid.filter(x=>x&&x.id===id).length}
 function isAtBuildingLimit(b){return buildingCount(b.id)>=getBuildingLimit(b)}
 function makeBuildButton(b){
-const factoryCount=state.grid.filter(x=>x&&x.id==='factory').length;
-const atLimit=b.id==='factory'&&factoryCount>=(b.maxCount||3);
+const placedCount=buildingCount(b.id);
+const atLimit=isAtBuildingLimit(b);
 const affordable=state.wood>=b.wood&&state.coin>=b.coin&&!atLimit;
 const btn=document.createElement('button');
 btn.className='build'+(state.selected===b.id?' selected':'')+(b.id==='road'?' road-tool':'');
