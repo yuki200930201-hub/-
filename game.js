@@ -32,11 +32,11 @@ const BUILDINGS=[
 {id:'oil_plant',name:'石油発電所',emoji:'🛢️',wood:8,coin:8,pop:0,cols:3,rows:3,powerCapacity:100},
 {id:'nuclear_plant',name:'原子力発電所',emoji:'⚛️',wood:12,coin:12,pop:0,cols:4,rows:4,powerCapacity:200},
 {id:'fusion_plant',name:'核融合発電所',emoji:'✨',wood:16,coin:16,pop:0,cols:4,rows:4,powerCapacity:400},
-{id:'town_office',name:'町役場',emoji:'🏛️',wood:5,coin:4,pop:0,cols:3,rows:3},
-{id:'city_hall',name:'市役所',emoji:'🏢',wood:8,coin:7,pop:0,cols:3,rows:3},
-{id:'mayor_residence',name:'市長の邸宅',emoji:'🏡',wood:7,coin:6,pop:0,cols:3,rows:3},
-{id:'storage_center',name:'貯蔵センター',emoji:'🏬',wood:9,coin:5,pop:0,cols:4,rows:3},
-{id:'bank',name:'銀行',emoji:'🏦',wood:8,coin:10,pop:0,cols:3,rows:3}
+{id:'town_office',name:'町役場',emoji:'🏛️',wood:0,coin:0,pop:0,cols:3,rows:3},
+{id:'city_hall',name:'市役所',emoji:'🏢',wood:0,coin:0,pop:0,cols:3,rows:3},
+{id:'mayor_residence',name:'市長の邸宅',emoji:'🏡',wood:0,coin:0,pop:0,cols:3,rows:3},
+{id:'storage_center',name:'貯蔵センター',emoji:'🏬',wood:0,coin:0,pop:0,cols:4,rows:3},
+{id:'bank',name:'銀行',emoji:'🏦',wood:0,coin:0,pop:0,cols:3,rows:3}
 ];
 const ROAD={id:'road',name:'道路',emoji:'🛣️',wood:0,coin:0,pop:0};
 const QUIZ=[
